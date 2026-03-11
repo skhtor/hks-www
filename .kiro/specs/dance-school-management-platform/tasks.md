@@ -132,7 +132,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Prevent double-booking
     - _Requirements: 24.1, 24.2_
   
-  - [~] 7.4 Write property tests for scheduling conflicts
+  - [x] 7.4 Write property tests for scheduling conflicts
     - **Property 41: Room Scheduling Conflicts**
     - **Property 42: Teacher Scheduling Conflicts**
     - **Validates: Requirements 24.1, 24.2**

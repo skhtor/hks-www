@@ -362,6 +362,299 @@ describe('ClassService Property-Based Tests', () => {
       );
     });
   });
+
+  /**
+   * Property 41: Room Scheduling Conflicts
+   * Feature: dance-school-management-platform
+   * For any time slot and room, at most one class should be scheduled in that room at that time.
+   * **Validates: Requirements 24.1**
+   */
+  describe('Property 41: Room Scheduling Conflicts', () => {
+    // roomId is a plain string identifier (no separate Room model in schema)
+    const roomId = `pbt-test-room-${Date.now()}`;
+
+    afterAll(async () => {
+      await prisma.class.deleteMany({ where: { roomId } });
+    });
+
+    it('should reject a second class in the same room when time ranges overlap', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            dayOfWeek: fc.constantFrom(
+              DayOfWeek.MONDAY,
+              DayOfWeek.TUESDAY,
+              DayOfWeek.WEDNESDAY,
+              DayOfWeek.THURSDAY,
+              DayOfWeek.FRIDAY,
+            ),
+            // First class starts at one of these times
+            firstStartHour: fc.integer({ min: 9, max: 15 }),
+            firstDuration: fc.integer({ min: 45, max: 90 }),
+            // Overlap offset: second class starts within the first class's duration
+            overlapOffsetMinutes: fc.integer({ min: 0, max: 44 }),
+          }),
+          async ({ dayOfWeek, firstStartHour, firstDuration, overlapOffsetMinutes }) => {
+            const firstStartTime = `${String(firstStartHour).padStart(2, '0')}:00`;
+            const secondStartMinutes = firstStartHour * 60 + overlapOffsetMinutes;
+            const secondStartTime = `${String(Math.floor(secondStartMinutes / 60)).padStart(2, '0')}:${String(secondStartMinutes % 60).padStart(2, '0')}`;
+
+            // Create a second teacher so teacher conflicts don't interfere
+            const teacher2 = await teacherService.createTeacher({
+              email: `pbt-room-teacher2-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Room-Teacher2-${Date.now()}`,
+            });
+
+            // Create the first class in the room
+            const firstClass = await classService.createClass({
+              name: `PBT-Test-Room-First-${Date.now()}`,
+              style: 'Ballet',
+              level: 'Beginner',
+              dayOfWeek,
+              startTime: firstStartTime,
+              duration: firstDuration,
+              locationId,
+              teacherId,
+              capacity: 10,
+              pricingRuleId,
+              roomId,
+            });
+
+            // Attempt to create a second class in the same room with overlapping time
+            await expect(
+              classService.createClass({
+                name: `PBT-Test-Room-Second-${Date.now()}`,
+                style: 'Jazz',
+                level: 'Intermediate',
+                dayOfWeek,
+                startTime: secondStartTime,
+                duration: 60,
+                locationId,
+                teacherId: teacher2.id,
+                capacity: 10,
+                pricingRuleId,
+                roomId,
+              })
+            ).rejects.toThrow(/scheduling conflict/i);
+
+            // Clean up
+            await prisma.class.delete({ where: { id: firstClass.id } });
+          }
+        ),
+        { numRuns: 15 }
+      );
+    });
+
+    it('should allow two classes in the same room when time ranges do not overlap', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            dayOfWeek: fc.constantFrom(
+              DayOfWeek.MONDAY,
+              DayOfWeek.TUESDAY,
+              DayOfWeek.WEDNESDAY,
+              DayOfWeek.THURSDAY,
+              DayOfWeek.FRIDAY,
+            ),
+            firstStartHour: fc.integer({ min: 9, max: 11 }),
+            firstDuration: fc.integer({ min: 30, max: 60 }),
+          }),
+          async ({ dayOfWeek, firstStartHour, firstDuration }) => {
+            const firstStartTime = `${String(firstStartHour).padStart(2, '0')}:00`;
+            // Second class starts after the first one ends (no overlap)
+            const secondStartHour = firstStartHour + Math.ceil(firstDuration / 60) + 1;
+            const secondStartTime = `${String(secondStartHour).padStart(2, '0')}:00`;
+
+            // Create a second teacher so teacher conflicts don't interfere
+            const teacher2 = await teacherService.createTeacher({
+              email: `pbt-room-noconflict-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Room-NoConflict-${Date.now()}`,
+            });
+
+            // Create the first class
+            const firstClass = await classService.createClass({
+              name: `PBT-Test-Room-NoConflict-First-${Date.now()}`,
+              style: 'Ballet',
+              level: 'Beginner',
+              dayOfWeek,
+              startTime: firstStartTime,
+              duration: firstDuration,
+              locationId,
+              teacherId,
+              capacity: 10,
+              pricingRuleId,
+              roomId,
+            });
+
+            // Second class should be created successfully (no overlap)
+            const secondClass = await classService.createClass({
+              name: `PBT-Test-Room-NoConflict-Second-${Date.now()}`,
+              style: 'Jazz',
+              level: 'Intermediate',
+              dayOfWeek,
+              startTime: secondStartTime,
+              duration: 60,
+              locationId,
+              teacherId: teacher2.id,
+              capacity: 10,
+              pricingRuleId,
+              roomId,
+            });
+
+            expect(secondClass.id).toBeDefined();
+            expect(secondClass.roomId).toBe(roomId);
+
+            // Clean up
+            await prisma.class.delete({ where: { id: firstClass.id } });
+            await prisma.class.delete({ where: { id: secondClass.id } });
+          }
+        ),
+        { numRuns: 15 }
+      );
+    });
+  });
+
+  /**
+   * Property 42: Teacher Scheduling Conflicts
+   * Feature: dance-school-management-platform
+   * For any time slot, a teacher should be assigned to at most one class at that time.
+   * **Validates: Requirements 24.2**
+   */
+  describe('Property 42: Teacher Scheduling Conflicts', () => {
+    it('should reject a second class for the same teacher when time ranges overlap', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            dayOfWeek: fc.constantFrom(
+              DayOfWeek.MONDAY,
+              DayOfWeek.TUESDAY,
+              DayOfWeek.WEDNESDAY,
+              DayOfWeek.THURSDAY,
+              DayOfWeek.FRIDAY,
+            ),
+            firstStartHour: fc.integer({ min: 9, max: 15 }),
+            firstDuration: fc.integer({ min: 45, max: 90 }),
+            overlapOffsetMinutes: fc.integer({ min: 0, max: 44 }),
+          }),
+          async ({ dayOfWeek, firstStartHour, firstDuration, overlapOffsetMinutes }) => {
+            // Create a dedicated teacher for this test run
+            const dedicatedTeacher = await teacherService.createTeacher({
+              email: `pbt-teacher-conflict-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Teacher-Conflict-${Date.now()}`,
+            });
+
+            const firstStartTime = `${String(firstStartHour).padStart(2, '0')}:00`;
+            const secondStartMinutes = firstStartHour * 60 + overlapOffsetMinutes;
+            const secondStartTime = `${String(Math.floor(secondStartMinutes / 60)).padStart(2, '0')}:${String(secondStartMinutes % 60).padStart(2, '0')}`;
+
+            // Create the first class for this teacher
+            const firstClass = await classService.createClass({
+              name: `PBT-Test-Teacher-First-${Date.now()}`,
+              style: 'Ballet',
+              level: 'Beginner',
+              dayOfWeek,
+              startTime: firstStartTime,
+              duration: firstDuration,
+              locationId,
+              teacherId: dedicatedTeacher.id,
+              capacity: 10,
+              pricingRuleId,
+            });
+
+            // Attempt to create a second class for the same teacher with overlapping time
+            await expect(
+              classService.createClass({
+                name: `PBT-Test-Teacher-Second-${Date.now()}`,
+                style: 'Jazz',
+                level: 'Intermediate',
+                dayOfWeek,
+                startTime: secondStartTime,
+                duration: 60,
+                locationId,
+                teacherId: dedicatedTeacher.id,
+                capacity: 10,
+                pricingRuleId,
+              })
+            ).rejects.toThrow(/scheduling conflict/i);
+
+            // Clean up
+            await prisma.class.delete({ where: { id: firstClass.id } });
+          }
+        ),
+        { numRuns: 15 }
+      );
+    });
+
+    it('should allow the same teacher to teach two classes when time ranges do not overlap', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.record({
+            dayOfWeek: fc.constantFrom(
+              DayOfWeek.MONDAY,
+              DayOfWeek.TUESDAY,
+              DayOfWeek.WEDNESDAY,
+              DayOfWeek.THURSDAY,
+              DayOfWeek.FRIDAY,
+            ),
+            firstStartHour: fc.integer({ min: 9, max: 11 }),
+            firstDuration: fc.integer({ min: 30, max: 60 }),
+          }),
+          async ({ dayOfWeek, firstStartHour, firstDuration }) => {
+            // Create a dedicated teacher for this test run
+            const dedicatedTeacher = await teacherService.createTeacher({
+              email: `pbt-teacher-noconflict-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Teacher-NoConflict-${Date.now()}`,
+            });
+
+            const firstStartTime = `${String(firstStartHour).padStart(2, '0')}:00`;
+            // Second class starts after the first one ends (no overlap)
+            const secondStartHour = firstStartHour + Math.ceil(firstDuration / 60) + 1;
+            const secondStartTime = `${String(secondStartHour).padStart(2, '0')}:00`;
+
+            // Create the first class
+            const firstClass = await classService.createClass({
+              name: `PBT-Test-Teacher-NoConflict-First-${Date.now()}`,
+              style: 'Ballet',
+              level: 'Beginner',
+              dayOfWeek,
+              startTime: firstStartTime,
+              duration: firstDuration,
+              locationId,
+              teacherId: dedicatedTeacher.id,
+              capacity: 10,
+              pricingRuleId,
+            });
+
+            // Second class should be created successfully (no overlap)
+            const secondClass = await classService.createClass({
+              name: `PBT-Test-Teacher-NoConflict-Second-${Date.now()}`,
+              style: 'Jazz',
+              level: 'Intermediate',
+              dayOfWeek,
+              startTime: secondStartTime,
+              duration: 60,
+              locationId,
+              teacherId: dedicatedTeacher.id,
+              capacity: 10,
+              pricingRuleId,
+            });
+
+            expect(secondClass.id).toBeDefined();
+            expect(secondClass.teacherId).toBe(dedicatedTeacher.id);
+
+            // Clean up
+            await prisma.class.delete({ where: { id: firstClass.id } });
+            await prisma.class.delete({ where: { id: secondClass.id } });
+          }
+        ),
+        { numRuns: 15 }
+      );
+    });
+  });
 });
 
 // Helper functions
