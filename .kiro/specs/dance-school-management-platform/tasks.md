@@ -212,7 +212,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 11. Enrolment service
+- [x] 11. Enrolment service
   - [x] 11.1 Implement enrolment creation with capacity enforcement
     - Create enrolment endpoint with capacity checking
     - Implement pessimistic locking to prevent race conditions
@@ -231,28 +231,28 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Calculate family discounts
     - _Requirements: 4.1, 25.1, 25.4_
   
-  - [~] 11.4 Write property test for bulk enrolment atomicity
+  - [x] 11.4 Write property test for bulk enrolment atomicity
     - **Property 43: Bulk Enrolment Atomicity**
     - **Validates: Requirements 25.4**
   
-  - [~] 11.5 Implement enrolment cancellation
+  - [x] 11.5 Implement enrolment cancellation
     - Create cancellation endpoint with effective date
     - Apply refund policy calculations
     - Update class capacity
     - Create audit log entry
     - _Requirements: 9.2, 9.3, 9.6, 26.2_
   
-  - [~] 11.6 Write property tests for cancellation
+  - [x] 11.6 Write property tests for cancellation
     - **Property 14: Capacity Adjustment on Move**
     - **Property 44: Refund Calculation**
     - **Validates: Requirements 9.1, 26.2**
   
-  - [~] 11.7 Implement enrolment move between classes
+  - [x] 11.7 Implement enrolment move between classes
     - Create move endpoint
     - Update both class capacities atomically
     - _Requirements: 9.1_
   
-  - [~] 11.8 Write property test for audit logging
+  - [x] 11.8 Write property test for audit logging
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.6**
 

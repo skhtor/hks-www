@@ -289,3 +289,206 @@ describe('EnrolmentService Property-Based Tests', () => {
     });
   });
 });
+
+describe('EnrolmentService Bulk Enrolment Property-Based Tests', () => {
+  let locationId2: string;
+  let pricingRuleId2: string;
+  let householdId2: string;
+
+  beforeAll(async () => {
+    const location = await prisma.location.create({
+      data: {
+        name: `PBT-Bulk-Location-${Date.now()}`,
+        address: { street: '2 Test St', suburb: 'Testville', state: 'VIC', postcode: '3000' },
+      },
+    });
+    locationId2 = location.id;
+
+    const pricingRule = await prisma.pricingRule.create({
+      data: {
+        name: `PBT-Bulk-Rule-${Date.now()}`,
+        type: 'PER_CLASS',
+        classCountMin: 1,
+        monthlyFee: 80,
+        priority: 1,
+      },
+    });
+    pricingRuleId2 = pricingRule.id;
+
+    const household = await prisma.household.create({
+      data: { name: `PBT-Bulk-Household-${Date.now()}` },
+    });
+    householdId2 = household.id;
+  });
+
+  afterAll(async () => {
+    await prisma.enrolment.deleteMany({
+      where: { class: { name: { contains: 'PBT-Bulk' } } },
+    });
+    await prisma.class.deleteMany({ where: { name: { contains: 'PBT-Bulk' } } });
+    await prisma.dancer.deleteMany({ where: { householdId: householdId2 } });
+    await prisma.household.deleteMany({ where: { id: householdId2 } });
+    await prisma.auditLog.deleteMany({ where: { user: { email: { contains: PBT_DOMAIN } } } });
+    await prisma.teacher.deleteMany({ where: { user: { email: { contains: PBT_DOMAIN } } } });
+    await prisma.userAccount.deleteMany({ where: { email: { contains: PBT_DOMAIN } } });
+    await prisma.location.deleteMany({ where: { id: locationId2 } });
+    await prisma.pricingRule.deleteMany({ where: { id: pricingRuleId2 } });
+  });
+
+  async function createBulkClass(capacity: number, teacherId: string) {
+    return prisma.class.create({
+      data: {
+        name: `PBT-Bulk-Class-${Date.now()}-${Math.random()}`,
+        style: 'Ballet',
+        level: 'Beginner',
+        dayOfWeek: 'TUESDAY',
+        startTime: '10:00',
+        duration: 60,
+        locationId: locationId2,
+        teacherId,
+        capacity,
+        enrolledCount: 0,
+        pricingRuleId: pricingRuleId2,
+      },
+    });
+  }
+
+  async function createBulkDancer() {
+    return prisma.dancer.create({
+      data: {
+        householdId: householdId2,
+        firstName: `Bulk${Date.now()}`,
+        lastName: 'Dancer',
+        dateOfBirth: new Date('2015-01-01'),
+        emergencyContact: { name: 'Parent', phone: '0400000000', relationship: 'Parent' },
+      },
+    });
+  }
+
+  /**
+   * Property 43: Bulk Enrolment Atomicity
+   * If any enrolment in a bulk operation fails, ALL enrolments must be rolled back.
+   * No partial state should be persisted.
+   * Validates: Requirements 25.4
+   */
+  describe('Property 43: Bulk Enrolment Atomicity', () => {
+    it('should roll back all enrolments when any item fails', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.integer({ min: 2, max: 4 }), // number of dancers to enrol
+          async (dancerCount) => {
+            const teacher = await teacherService.createTeacher({
+              email: `pbt-bulk-teacher-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Bulk-Teacher-${Date.now()}`,
+            });
+            const adminUser = await prisma.userAccount.create({
+              data: {
+                email: `pbt-bulk-admin-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+                passwordHash: 'hash',
+                role: 'ADMIN',
+              },
+            });
+
+            // Create dancerCount classes with capacity 10
+            const classes = await Promise.all(
+              Array.from({ length: dancerCount }, () => createBulkClass(10, teacher.id))
+            );
+
+            // Create dancerCount dancers
+            const dancers = await Promise.all(
+              Array.from({ length: dancerCount }, () => createBulkDancer())
+            );
+
+            // Fill the LAST class to capacity so the last item fails
+            const lastClass = classes[classes.length - 1];
+            const fillerDancers = await Promise.all(
+              Array.from({ length: 10 }, () => createBulkDancer())
+            );
+            for (const d of fillerDancers) {
+              await enrolmentService.createEnrolment({
+                dancerId: d.id,
+                classId: lastClass.id,
+                startDate: new Date('2025-01-01'),
+              });
+            }
+
+            // Build bulk items: first N-1 are valid, last one targets the full class
+            const items = dancers.map((dancer, i) => ({
+              dancerId: dancer.id,
+              classId: classes[i].id,
+              startDate: new Date('2025-01-01'),
+            }));
+
+            // Bulk enrol should fail due to last class being full
+            await expect(
+              enrolmentService.bulkEnrol(items, adminUser.id)
+            ).rejects.toThrow('Class is at full capacity');
+
+            // Verify NO enrolments were created for any of the dancers
+            for (let i = 0; i < dancerCount - 1; i++) {
+              const count = await prisma.enrolment.count({
+                where: { dancerId: dancers[i].id, classId: classes[i].id },
+              });
+              expect(count).toBe(0); // rolled back
+            }
+
+            // Verify class counts are unchanged for the non-full classes
+            for (let i = 0; i < dancerCount - 1; i++) {
+              const cls = await prisma.class.findUnique({ where: { id: classes[i].id } });
+              expect(cls!.enrolledCount).toBe(0);
+            }
+          }
+        ),
+        { numRuns: 5 }
+      );
+    });
+
+    it('should succeed and persist all enrolments when all items are valid', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.integer({ min: 1, max: 3 }), // number of dancers
+          async (dancerCount) => {
+            const teacher = await teacherService.createTeacher({
+              email: `pbt-bulk-ok-teacher-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Bulk-OK-Teacher-${Date.now()}`,
+            });
+            const adminUser = await prisma.userAccount.create({
+              data: {
+                email: `pbt-bulk-ok-admin-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+                passwordHash: 'hash',
+                role: 'ADMIN',
+              },
+            });
+
+            const classes = await Promise.all(
+              Array.from({ length: dancerCount }, () => createBulkClass(10, teacher.id))
+            );
+            const dancers = await Promise.all(
+              Array.from({ length: dancerCount }, () => createBulkDancer())
+            );
+
+            const items = dancers.map((dancer, i) => ({
+              dancerId: dancer.id,
+              classId: classes[i].id,
+              startDate: new Date('2025-01-01'),
+            }));
+
+            const enrolments = await enrolmentService.bulkEnrol(items, adminUser.id);
+
+            // All enrolments created
+            expect(enrolments).toHaveLength(dancerCount);
+
+            // All class counts incremented
+            for (const cls of classes) {
+              const updated = await prisma.class.findUnique({ where: { id: cls.id } });
+              expect(updated!.enrolledCount).toBe(1);
+            }
+          }
+        ),
+        { numRuns: 5 }
+      );
+    });
+  });
+});
