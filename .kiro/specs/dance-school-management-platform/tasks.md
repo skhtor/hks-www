@@ -164,7 +164,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 3.3, 3.4_
 
 - [~] 9. Fee engine
-  - [~] 9.1 Implement pricing rule management
+  - [x] 9.1 Implement pricing rule management
     - Create pricing rule CRUD endpoints
     - Support per-class, tiered bundle, and term-based pricing
     - Implement rule priority and activation
