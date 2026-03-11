@@ -208,7 +208,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 40: Configuration Immediate Effect**
     - **Validates: Requirements 22.6**
 
-- [-] 10. Checkpoint - Classes and fee engine
+- [x] 10. Checkpoint - Classes and fee engine
   - Ensure all tests pass, ask the user if questions arise.
 
 
