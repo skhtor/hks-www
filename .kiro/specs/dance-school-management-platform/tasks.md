@@ -257,23 +257,23 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Validates: Requirements 9.6**
 
 - [ ] 12. Waitlist service
-  - [ ] 12.1 Implement waitlist management
+  - [x] 12.1 Implement waitlist management
     - Create join waitlist endpoint
     - Assign sequential positions
     - Record timestamps
     - _Requirements: 15.1, 15.2_
   
-  - [ ] 12.2 Write property test for waitlist ordering
+  - [x] 12.2 Write property test for waitlist ordering
     - **Property 28: Waitlist Ordering**
     - **Validates: Requirements 15.2**
   
-  - [ ] 12.3 Implement waitlist offer processing
+  - [x] 12.3 Implement waitlist offer processing
     - Offer spot to next customer when available
     - Generate timed acceptance links
     - Handle offer expiry and progression
     - _Requirements: 15.3, 15.4, 15.5_
   
-  - [ ] 12.4 Write property tests for waitlist queue
+  - [x] 12.4 Write property tests for waitlist queue
     - **Property 29: Waitlist Queue Processing**
     - **Property 30: Waitlist Progression**
     - **Validates: Requirements 15.3, 15.5**
