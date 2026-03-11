@@ -182,7 +182,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle one-time fees
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.7, 5.8_
   
-  - [ ] 9.4 Write property tests for fee calculations
+  - [x] 9.4 Write property tests for fee calculations
     - **Property 10: Fee Calculation Determinism**
     - **Property 15: Per-Class Pricing Calculation**
     - **Property 16: Tiered Bundle Pricing**
