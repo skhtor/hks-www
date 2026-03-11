@@ -2,6 +2,42 @@ import { PrismaClient, DayOfWeek } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+export interface ConflictInfo {
+  type: 'teacher' | 'room';
+  conflictingClassId: string;
+  conflictingClassName: string;
+  message: string;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  conflicts: ConflictInfo[];
+}
+
+/**
+ * Converts a "HH:MM" time string to total minutes since midnight.
+ */
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+/**
+ * Returns true if two time ranges overlap.
+ * Range A: [aStart, aStart + aDuration)
+ * Range B: [bStart, bStart + bDuration)
+ */
+function timesOverlap(
+  aStart: number,
+  aDuration: number,
+  bStart: number,
+  bDuration: number,
+): boolean {
+  const aEnd = aStart + aDuration;
+  const bEnd = bStart + bDuration;
+  return aStart < bEnd && aEnd > bStart;
+}
+
 export interface CreateClassInput {
   name: string;
   style: string;
@@ -49,6 +85,74 @@ export interface TimetableFilters {
 
 export class ClassService {
   /**
+   * Checks for scheduling conflicts for a class definition.
+   * Requirements: 24.1, 24.2, 24.5
+   *
+   * @param data - The class data to check (dayOfWeek, startTime, duration, teacherId, roomId)
+   * @param excludeClassId - Optional class ID to exclude (used when updating an existing class)
+   */
+  async checkSchedulingConflicts(
+    data: {
+      dayOfWeek: DayOfWeek;
+      startTime: string;
+      duration: number;
+      teacherId: string;
+      roomId?: string;
+    },
+    excludeClassId?: string,
+  ): Promise<ValidationResult> {
+    const { dayOfWeek, startTime, duration, teacherId, roomId } = data;
+    const conflicts: ConflictInfo[] = [];
+
+    // Find all classes on the same day (excluding the class being updated)
+    const candidateClasses = await prisma.class.findMany({
+      where: {
+        dayOfWeek,
+        ...(excludeClassId ? { id: { not: excludeClassId } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        startTime: true,
+        duration: true,
+        teacherId: true,
+        roomId: true,
+      },
+    });
+
+    const newStart = timeToMinutes(startTime);
+
+    for (const existing of candidateClasses) {
+      const existingStart = timeToMinutes(existing.startTime);
+      const overlaps = timesOverlap(newStart, duration, existingStart, existing.duration);
+
+      if (!overlaps) continue;
+
+      // Check teacher conflict (Req 24.2)
+      if (existing.teacherId === teacherId) {
+        conflicts.push({
+          type: 'teacher',
+          conflictingClassId: existing.id,
+          conflictingClassName: existing.name,
+          message: `Teacher is already assigned to "${existing.name}" at an overlapping time on ${dayOfWeek}`,
+        });
+      }
+
+      // Check room conflict (Req 24.1)
+      if (roomId && existing.roomId && existing.roomId === roomId) {
+        conflicts.push({
+          type: 'room',
+          conflictingClassId: existing.id,
+          conflictingClassName: existing.name,
+          message: `Room is already booked for "${existing.name}" at an overlapping time on ${dayOfWeek}`,
+        });
+      }
+    }
+
+    return { valid: conflicts.length === 0, conflicts };
+  }
+
+  /**
    * Creates a new class.
    * Requirements: 8.1, 8.2 - Admin creates class with required and optional fields
    */
@@ -75,6 +179,19 @@ export class ClassService {
     const pricingRule = await prisma.pricingRule.findUnique({ where: { id: pricingRuleId } });
     if (!pricingRule) {
       throw new Error('Pricing rule not found');
+    }
+
+    // Check for scheduling conflicts (Req 24.1, 24.2, 24.5)
+    const conflictResult = await this.checkSchedulingConflicts({
+      dayOfWeek,
+      startTime,
+      duration,
+      teacherId,
+      roomId,
+    });
+    if (!conflictResult.valid) {
+      const messages = conflictResult.conflicts.map((c) => c.message).join('; ');
+      throw new Error(`Scheduling conflict detected: ${messages}`);
     }
 
     return prisma.class.create({
@@ -155,6 +272,37 @@ export class ClassService {
       const pricingRule = await prisma.pricingRule.findUnique({ where: { id: input.pricingRuleId } });
       if (!pricingRule) {
         throw new Error('Pricing rule not found');
+      }
+    }
+
+    // Check for scheduling conflicts if any scheduling fields are being updated (Req 24.1, 24.2, 24.5)
+    const schedulingFieldsChanged =
+      input.dayOfWeek !== undefined ||
+      input.startTime !== undefined ||
+      input.duration !== undefined ||
+      input.teacherId !== undefined ||
+      input.roomId !== undefined;
+
+    if (schedulingFieldsChanged) {
+      const effectiveDayOfWeek = input.dayOfWeek ?? cls.dayOfWeek;
+      const effectiveStartTime = input.startTime ?? cls.startTime;
+      const effectiveDuration = input.duration ?? cls.duration;
+      const effectiveTeacherId = input.teacherId ?? cls.teacherId;
+      const effectiveRoomId = input.roomId !== undefined ? input.roomId : cls.roomId ?? undefined;
+
+      const conflictResult = await this.checkSchedulingConflicts(
+        {
+          dayOfWeek: effectiveDayOfWeek,
+          startTime: effectiveStartTime,
+          duration: effectiveDuration,
+          teacherId: effectiveTeacherId,
+          roomId: effectiveRoomId,
+        },
+        classId,
+      );
+      if (!conflictResult.valid) {
+        const messages = conflictResult.conflicts.map((c) => c.message).join('; ');
+        throw new Error(`Scheduling conflict detected: ${messages}`);
       }
     }
 
