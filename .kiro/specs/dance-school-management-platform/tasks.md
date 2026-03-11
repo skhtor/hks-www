@@ -190,7 +190,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 19: GST Calculation**
     - **Validates: Requirements 4.2, 5.1, 5.2, 5.3, 5.7**
   
-  - [ ] 9.5 Implement proration calculation
+  - [x] 9.5 Implement proration calculation
     - Calculate prorated fees for mid-cycle starts
     - Support configurable billing cycles
     - _Requirements: 5.6_
