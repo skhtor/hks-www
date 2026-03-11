@@ -81,6 +81,13 @@ describe('ClassService Property-Based Tests', () => {
             capacity: fc.integer({ min: 5, max: 30 }),
           }),
           async ({ name, style, level, dayOfWeek, startTime, duration, capacity }) => {
+            // Create a dedicated teacher per run to avoid scheduling conflicts
+            const runTeacher = await teacherService.createTeacher({
+              email: `pbt-run-teacher-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Run-Teacher-${Date.now()}`,
+            });
+
             // Create a class with the generated parameters
             const created = await classService.createClass({
               name,
@@ -90,7 +97,7 @@ describe('ClassService Property-Based Tests', () => {
               startTime,
               duration,
               locationId,
-              teacherId,
+              teacherId: runTeacher.id,
               capacity,
               pricingRuleId,
             });
@@ -160,6 +167,13 @@ describe('ClassService Property-Based Tests', () => {
             capacity: fc.integer({ min: 5, max: 30 }),
           }),
           async ({ name, style, level, dayOfWeek, startTime, duration, capacity }) => {
+            // Create a dedicated teacher per run to avoid scheduling conflicts
+            const runTeacher = await teacherService.createTeacher({
+              email: `pbt-run-teacher2-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Run-Teacher2-${Date.now()}`,
+            });
+
             const created = await classService.createClass({
               name,
               style,
@@ -168,7 +182,7 @@ describe('ClassService Property-Based Tests', () => {
               startTime,
               duration,
               locationId,
-              teacherId,
+              teacherId: runTeacher.id,
               capacity,
               pricingRuleId,
             });
@@ -223,6 +237,13 @@ describe('ClassService Property-Based Tests', () => {
             startTime: fc.constantFrom('09:00', '10:00', '11:00', '14:00', '15:00', '16:00'),
           }),
           async ({ name, level, duration, capacity, startTime }) => {
+            // Create a dedicated teacher per run to avoid scheduling conflicts
+            const runTeacher = await teacherService.createTeacher({
+              email: `pbt-update-teacher-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Update-Teacher-${Date.now()}`,
+            });
+
             // Create a base class
             const created = await classService.createClass({
               name: `PBT-Test-Base-${Date.now()}`,
@@ -232,7 +253,7 @@ describe('ClassService Property-Based Tests', () => {
               startTime: '09:00',
               duration: 60,
               locationId,
-              teacherId,
+              teacherId: runTeacher.id,
               capacity: 15,
               pricingRuleId,
             });
@@ -285,6 +306,13 @@ describe('ClassService Property-Based Tests', () => {
             const originalStyle = 'Contemporary';
             const originalDuration = 45;
 
+            // Create a dedicated teacher per run to avoid scheduling conflicts
+            const runTeacher = await teacherService.createTeacher({
+              email: `pbt-partial-teacher-${Date.now()}-${Math.random()}${PBT_DOMAIN}`,
+              password: 'SecurePass123!',
+              name: `PBT-Partial-Teacher-${Date.now()}`,
+            });
+
             // Create a class with known values
             const created = await classService.createClass({
               name: `PBT-Test-Preserve-${Date.now()}`,
@@ -294,7 +322,7 @@ describe('ClassService Property-Based Tests', () => {
               startTime: '10:00',
               duration: originalDuration,
               locationId,
-              teacherId,
+              teacherId: runTeacher.id,
               capacity: 12,
               pricingRuleId,
             });

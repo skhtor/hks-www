@@ -163,7 +163,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Show "full" indicator when at capacity
     - _Requirements: 3.3, 3.4_
 
-- [ ] 9. Fee engine
+- [x] 9. Fee engine
   - [x] 9.1 Implement pricing rule management
     - Create pricing rule CRUD endpoints
     - Support per-class, tiered bundle, and term-based pricing
@@ -208,7 +208,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 40: Configuration Immediate Effect**
     - **Validates: Requirements 22.6**
 
-- [ ] 10. Checkpoint - Classes and fee engine
+- [-] 10. Checkpoint - Classes and fee engine
   - Ensure all tests pass, ask the user if questions arise.
 
 
