@@ -170,12 +170,12 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Implement rule priority and activation
     - _Requirements: 5.1, 5.2, 5.5, 22.2_
   
-  - [~] 9.2 Implement discount rule management
+  - [x] 9.2 Implement discount rule management
     - Create discount rule CRUD endpoints
     - Support percentage, fixed amount, family, and concession discounts
     - _Requirements: 5.3, 5.4, 22.3_
   
-  - [~] 9.3 Implement fee calculation engine
+  - [x] 9.3 Implement fee calculation engine
     - Calculate base fees using pricing rules
     - Apply discounts based on eligibility
     - Calculate GST (10%)

@@ -1,5 +1,5 @@
 import { FeeService } from '../../services/fee.service';
-import { PrismaClient, PricingRuleType } from '@prisma/client';
+import { PrismaClient, PricingRuleType, DiscountType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const feeService = new FeeService();
@@ -285,6 +285,181 @@ describe('FeeService', () => {
       if (idx !== -1) createdRuleIds.splice(idx, 1);
       const gIdx = createdRuleIds.indexOf(genericRule.id);
       if (gIdx !== -1) createdRuleIds.splice(gIdx, 1);
+    });
+  });
+
+  // ─── Fee Calculation Engine ─────────────────────────────────────────────────
+
+  describe('Fee Calculation Engine', () => {
+    const FEE_CALC_PREFIX = 'fee-calc-test-';
+    const createdDiscountIds: string[] = [];
+
+    async function createCalcRule(overrides: Partial<Parameters<typeof feeService.createPricingRule>[0]> = {}) {
+      const rule = await feeService.createPricingRule({
+        name: `${FEE_CALC_PREFIX}rule-${Date.now()}-${Math.random()}`,
+        type: PricingRuleType.PER_CLASS,
+        classCountMin: 1,
+        monthlyFee: 100,
+        priority: 0,
+        active: true,
+        ...overrides,
+      });
+      createdRuleIds.push(rule.id);
+      return rule;
+    }
+
+    async function createDiscount(overrides: Partial<Parameters<typeof feeService.createDiscountRule>[0]> = {}) {
+      const discount = await feeService.createDiscountRule({
+        name: `${FEE_CALC_PREFIX}discount-${Date.now()}-${Math.random()}`,
+        type: DiscountType.PERCENTAGE,
+        value: 10,
+        eligibilityCriteria: {},
+        priority: 1,
+        active: true,
+        ...overrides,
+      });
+      createdDiscountIds.push(discount.id);
+      return discount;
+    }
+
+    afterAll(async () => {
+      for (const id of createdDiscountIds) {
+        try {
+          await prisma.discountRule.delete({ where: { id } });
+        } catch {
+          // ignore
+        }
+      }
+    });
+
+    it('should calculate fee with no discounts - verify subtotal, GST (10%), total', async () => {
+      await createCalcRule({ monthlyFee: 100, classCountMin: 1, classCountMax: 1, priority: 0 });
+
+      const result = await feeService.calculateFee({ classCount: 1 });
+
+      expect(result.subtotal).toBe(100);
+      expect(result.discountAmount).toBe(0);
+      expect(result.oneTimeFee).toBe(0);
+      expect(result.gstAmount).toBe(10); // 10% of 100
+      expect(result.total).toBe(110);    // 100 + 10
+      expect(result.appliedDiscounts).toHaveLength(0);
+      expect(result.pricingRule).not.toBeNull();
+    });
+
+    it('should calculate fee with PERCENTAGE discount', async () => {
+      const rule = await createCalcRule({ monthlyFee: 200, classCountMin: 2, classCountMax: 2, priority: 0 });
+      const discount = await createDiscount({
+        type: DiscountType.PERCENTAGE,
+        value: 20, // 20% off
+      });
+
+      const result = await feeService.calculateFee({
+        classCount: 2,
+        discountIds: [discount.id],
+      });
+
+      expect(result.subtotal).toBe(200);
+      expect(result.discountAmount).toBe(40);   // 20% of 200
+      expect(result.gstAmount).toBe(16);         // 10% of (200 - 40) = 10% of 160
+      expect(result.total).toBe(176);            // 160 + 16
+      expect(result.appliedDiscounts).toHaveLength(1);
+      expect(result.appliedDiscounts[0].amount).toBe(40);
+
+      // cleanup
+      createdRuleIds.push(rule.id);
+    });
+
+    it('should calculate fee with FIXED_AMOUNT discount', async () => {
+      await createCalcRule({ monthlyFee: 150, classCountMin: 3, classCountMax: 3, priority: 0 });
+      const discount = await createDiscount({
+        type: DiscountType.FIXED_AMOUNT,
+        value: 25, // $25 off
+      });
+
+      const result = await feeService.calculateFee({
+        classCount: 3,
+        discountIds: [discount.id],
+      });
+
+      expect(result.subtotal).toBe(150);
+      expect(result.discountAmount).toBe(25);
+      expect(result.gstAmount).toBe(12.5);  // 10% of (150 - 25) = 10% of 125
+      expect(result.total).toBe(137.5);     // 125 + 12.5
+      expect(result.appliedDiscounts[0].amount).toBe(25);
+    });
+
+    it('should calculate fee with multiple discounts - verify cumulative discount', async () => {
+      await createCalcRule({ monthlyFee: 200, classCountMin: 4, classCountMax: 4, priority: 0 });
+      const d1 = await createDiscount({ type: DiscountType.PERCENTAGE, value: 10 }); // 10% = $20
+      const d2 = await createDiscount({ type: DiscountType.FIXED_AMOUNT, value: 15 }); // $15
+
+      const result = await feeService.calculateFee({
+        classCount: 4,
+        discountIds: [d1.id, d2.id],
+      });
+
+      expect(result.subtotal).toBe(200);
+      expect(result.discountAmount).toBe(35);   // 20 + 15
+      expect(result.gstAmount).toBe(16.5);       // 10% of (200 - 35) = 10% of 165
+      expect(result.total).toBe(181.5);          // 165 + 16.5
+      expect(result.appliedDiscounts).toHaveLength(2);
+    });
+
+    it('should calculate fee with one-time fee - verify one-time fee included in GST base', async () => {
+      await createCalcRule({ monthlyFee: 100, classCountMin: 5, classCountMax: 5, priority: 0 });
+
+      const result = await feeService.calculateFee({
+        classCount: 5,
+        oneTimeFeeAmount: 50,
+      });
+
+      expect(result.subtotal).toBe(100);
+      expect(result.oneTimeFee).toBe(50);
+      expect(result.discountAmount).toBe(0);
+      // GST base = 100 - 0 + 50 = 150
+      expect(result.gstAmount).toBe(15);   // 10% of 150
+      expect(result.total).toBe(165);      // 150 + 15
+    });
+
+    it('should throw error when no pricing rule found', async () => {
+      // classCount=0 won't match any rule with classCountMin >= 1
+      await expect(
+        feeService.calculateFee({ classCount: 0 })
+      ).rejects.toThrow('No applicable pricing rule found for the given class count');
+    });
+
+    describe('calculateProration', () => {
+      it('should return full month fee when start is on billing day', () => {
+        const startDate = new Date('2024-03-01'); // day 1
+        const result = feeService.calculateProration(100, startDate, 1);
+        expect(result).toBe(100);
+      });
+
+      it('should return full month fee when start is before billing day', () => {
+        const startDate = new Date('2024-03-05'); // day 5, billing day 10
+        const result = feeService.calculateProration(100, startDate, 10);
+        expect(result).toBe(100);
+      });
+
+      it('should prorate when start is after billing day', () => {
+        // March has 31 days. Start on day 16, billing day 1.
+        // daysRemaining = 31 - 16 + 1 = 16
+        // prorated = (16 / 31) * 100 ≈ 51.61
+        const startDate = new Date('2024-03-16');
+        const result = feeService.calculateProration(100, startDate, 1);
+        const expected = Math.round((16 / 31) * 100 * 100) / 100;
+        expect(result).toBe(expected);
+      });
+
+      it('should prorate correctly for last day of month', () => {
+        // March has 31 days. Start on day 31, billing day 1.
+        // daysRemaining = 31 - 31 + 1 = 1
+        // prorated = (1 / 31) * 100 ≈ 3.23
+        const startDate = new Date('2024-03-31');
+        const result = feeService.calculateProration(100, startDate, 1);
+        const expected = Math.round((1 / 31) * 100 * 100) / 100;
+        expect(result).toBe(expected);
+      });
     });
   });
 });
