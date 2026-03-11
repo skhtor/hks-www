@@ -12,6 +12,7 @@ import timetableRoutes from './routes/timetable.routes';
 import feeRoutes from './routes/fee.routes';
 import enrolmentRoutes from './routes/enrolment.routes';
 import paymentRoutes from './routes/payment.routes';
+import invoiceRoutes from './routes/invoice.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -75,6 +76,9 @@ export const createApp = (): Application => {
 
   // Payment routes (webhook must be before express.json to receive raw body)
   app.use('/api/payments', paymentRoutes);
+
+  // Invoice routes
+  app.use('/api/invoices', invoiceRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

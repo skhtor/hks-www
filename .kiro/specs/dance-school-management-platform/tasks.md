@@ -341,20 +341,20 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Update payment status
     - _Requirements: 9.3, 26.3_
 
-- [~] 16. Invoice service
-  - [~] 16.1 Implement invoice generation
+- [x] 16. Invoice service
+  - [x] 16.1 Implement invoice generation
     - Create invoice on enrolment confirmation
     - Generate line items with descriptions
     - Calculate totals with GST
     - Use idempotency keys
     - _Requirements: 11.1, 19.1, 19.4_
   
-  - [~] 16.2 Write property tests for invoices
+  - [x] 16.2 Write property tests for invoices
     - **Property 20: Invoice Total Integrity**
     - **Property 36: Invoice Generation Idempotency**
     - **Validates: Requirements 19.1, 19.4**
   
-  - [~] 16.3 Implement invoice status management
+  - [x] 16.3 Implement invoice status management
     - Track invoice statuses (Due, Paid, Overdue, Failed)
     - Update status on payment
     - Send overdue notifications
