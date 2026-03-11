@@ -256,7 +256,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.6**
 
-- [~] 12. Waitlist service
+- [x] 12. Waitlist service
   - [x] 12.1 Implement waitlist management
     - Create join waitlist endpoint
     - Assign sequential positions
