@@ -261,6 +261,91 @@ describe('FeeService Property-Based Tests', () => {
       );
     });
 
+  });
+
+  /**
+   * Property 18: Proration Calculation
+   * For any start date after the billing cycle day, the prorated fee must be:
+   *   - Less than the full monthly fee
+   *   - Equal to (daysRemaining / daysInMonth) * monthlyFee, rounded to 2dp
+   *   - Always > 0 when monthlyFee > 0
+   * For start dates on or before the billing cycle day, full fee is charged.
+   * Validates: Requirements 5.6
+   */
+  describe('Property 18: Proration Calculation', () => {
+    it('should return full fee when start day <= billing cycle day', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 50, max: 500 }),  // monthlyFee
+          fc.integer({ min: 1, max: 28 }),    // billingCycleDay
+          fc.integer({ min: 2015, max: 2030 }), // year
+          fc.integer({ min: 0, max: 11 }),    // month (0-indexed)
+          (monthlyFee, billingCycleDay, year, month) => {
+            // startDay <= billingCycleDay → full fee
+            const startDay = Math.min(billingCycleDay, 28); // safe for all months
+            const startDate = new Date(year, month, startDay);
+            const result = feeService.calculateProration(monthlyFee, startDate, billingCycleDay);
+            expect(result).toBe(Math.round(monthlyFee * 100) / 100);
+          }
+        ),
+        { numRuns: 50 }
+      );
+    });
+
+    it('should prorate correctly when start day > billing cycle day', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 50, max: 500 }),  // monthlyFee
+          fc.integer({ min: 1, max: 15 }),    // billingCycleDay (keep low so startDay can exceed it)
+          fc.integer({ min: 2015, max: 2030 }), // year
+          fc.integer({ min: 0, max: 11 }),    // month
+          (monthlyFee, billingCycleDay, year, month) => {
+            // startDay > billingCycleDay — pick a day safely above it
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const startDay = Math.min(billingCycleDay + 5, daysInMonth);
+            if (startDay <= billingCycleDay) return; // skip edge case
+
+            const startDate = new Date(year, month, startDay);
+            const result = feeService.calculateProration(monthlyFee, startDate, billingCycleDay);
+
+            const daysRemaining = daysInMonth - startDay + 1;
+            const expected = Math.round((daysRemaining / daysInMonth) * monthlyFee * 100) / 100;
+
+            expect(result).toBe(expected);
+            // Prorated fee must be less than full fee
+            expect(result).toBeLessThan(monthlyFee);
+            // Must be positive
+            expect(result).toBeGreaterThan(0);
+          }
+        ),
+        { numRuns: 50 }
+      );
+    });
+
+    it('should always return a value between 0 and monthlyFee (inclusive)', () => {
+      fc.assert(
+        fc.property(
+          fc.integer({ min: 1, max: 1000 }),  // monthlyFee
+          fc.integer({ min: 1, max: 28 }),    // billingCycleDay
+          fc.date({ min: new Date('2015-01-01'), max: new Date('2030-12-31') }),
+          (monthlyFee, billingCycleDay, startDate) => {
+            const result = feeService.calculateProration(monthlyFee, startDate, billingCycleDay);
+            expect(result).toBeGreaterThan(0);
+            expect(result).toBeLessThanOrEqual(monthlyFee);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+  });
+
+  /**
+   * Property 19: GST Calculation
+   * For any fee calculation, gstAmount = round((subtotal - discountAmount + oneTimeFee) * 0.1, 2)
+   * and total = (subtotal - discountAmount + oneTimeFee) + gstAmount.
+   * Validates: Requirements 5.7
+   */
+  describe('Property 19: GST Calculation - discount clamping', () => {
     it('should never produce a negative total regardless of discount size', async () => {
       await fc.assert(
         fc.asyncProperty(

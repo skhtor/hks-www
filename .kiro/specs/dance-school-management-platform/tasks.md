@@ -195,7 +195,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support configurable billing cycles
     - _Requirements: 5.6_
   
-  - [ ] 9.6 Write property test for proration
+  - [x] 9.6 Write property test for proration
     - **Property 18: Proration Calculation**
     - **Validates: Requirements 5.6**
   
