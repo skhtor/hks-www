@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { config } from './config/env';
 import authRoutes from './routes/auth.routes';
+import customerRoutes from './routes/customer.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -43,6 +44,9 @@ export const createApp = (): Application => {
 
   // Auth routes
   app.use('/api/auth', authRoutes);
+
+  // Customer routes
+  app.use('/api/customers', customerRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

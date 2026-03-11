@@ -91,7 +91,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Validates: Requirements 2.3**
 
 - [ ] 5. User service
-  - [ ] 5.1 Implement customer profile management
+  - [x] 5.1 Implement customer profile management
     - Create customer profile CRUD endpoints
     - Implement househo ld management
     - _Requirements: 1.3, 1.6_
