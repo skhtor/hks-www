@@ -142,7 +142,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 8.4_
 
 - [~] 8. Timetable service
-  - [~] 8.1 Implement timetable query endpoint
+  - [x] 8.1 Implement timetable query endpoint
     - Create endpoint to list all active classes
     - Support week grid and list view formats
     - Implement caching for performance

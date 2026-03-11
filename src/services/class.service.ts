@@ -355,11 +355,15 @@ export class ClassService {
   }
 
   /**
-   * Gets all classes with optional filters (timetable).
+   * Gets all active classes with optional filters (timetable).
+   * Active = endDate IS NULL OR endDate > NOW
    * Requirements: 3.1, 3.2 - Display and filter timetable
    */
   async getTimetable(filters: TimetableFilters = {}) {
-    const where: Record<string, unknown> = {};
+    const now = new Date();
+    const where: Record<string, unknown> = {
+      OR: [{ endDate: null }, { endDate: { gt: now } }],
+    };
 
     if (filters.level) where.level = filters.level;
     if (filters.style) where.style = filters.style;
@@ -376,6 +380,32 @@ export class ClassService {
       },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
     });
+  }
+
+  /**
+   * Gets capacity info for a specific class.
+   * Requirements: 3.3, 3.4 - Show remaining capacity
+   */
+  async getClassCapacity(classId: string) {
+    const cls = await prisma.class.findUnique({
+      where: { id: classId },
+      select: { id: true, capacity: true, enrolledCount: true },
+    });
+
+    if (!cls) {
+      throw new Error('Class not found');
+    }
+
+    const waitlistCount = await prisma.waitlistEntry.count({ where: { classId } });
+
+    return {
+      classId: cls.id,
+      capacity: cls.capacity,
+      enrolled: cls.enrolledCount,
+      available: Math.max(0, cls.capacity - cls.enrolledCount),
+      isFull: cls.enrolledCount >= cls.capacity,
+      waitlistCount,
+    };
   }
 
   /**

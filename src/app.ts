@@ -8,6 +8,7 @@ import customerRoutes from './routes/customer.routes';
 import dancerRoutes from './routes/dancer.routes';
 import teacherRoutes from './routes/teacher.routes';
 import classRoutes from './routes/class.routes';
+import timetableRoutes from './routes/timetable.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -59,6 +60,9 @@ export const createApp = (): Application => {
 
   // Class routes
   app.use('/api/classes', classRoutes);
+
+  // Timetable routes (public)
+  app.use('/api/timetable', timetableRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
