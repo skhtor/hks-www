@@ -1,193 +1,186 @@
 import { Router, Request, Response } from 'express';
-import { authenticate, authorize, checkTeacherClassAccess } from '../middleware/auth.middleware';
-import { authorizationService } from '../services/authorization.service';
+import { z } from 'zod';
+import { teacherService } from '../services/teacher.service';
+import { authenticate, authorize } from '../middleware/auth.middleware';
+import { UserRole } from '@prisma/client';
 
 const router = Router();
 
+// All teacher routes require authentication
+router.use(authenticate);
+
+// Validation schemas
+const createTeacherSchema = z.object({
+  email: z.string().email('Valid email is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(1, 'Name is required'),
+  bio: z.string().optional(),
+  specialties: z.array(z.string()).optional(),
+  photoUrl: z.string().url('Invalid photo URL').optional(),
+});
+
+const updateTeacherSchema = z.object({
+  name: z.string().min(1).optional(),
+  bio: z.string().optional(),
+  specialties: z.array(z.string()).optional(),
+  photoUrl: z.string().url('Invalid photo URL').optional(),
+});
+
 /**
- * GET /teacher/classes
- * Get all classes assigned to the authenticated teacher
- * 
- * Requirements: 2.3, 7.7 - Teachers should only see classes assigned to them
+ * POST /api/teachers
+ * Create a teacher account (admin only).
+ * Requirements: 2.5 - Admin creates teacher account, prevents self-registration
  */
-router.get(
-  '/classes',
-  authenticate,
-  authorize('TEACHER', 'ADMIN'),
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-        });
-        return;
-      }
-
-      // Get teacher record
-      const { PrismaClient } = await import('@prisma/client');
-      const prisma = new PrismaClient();
-
-      try {
-        const teacher = await prisma.teacher.findUnique({
-          where: { userId: req.user.userId },
-        });
-
-        if (!teacher) {
-          res.status(404).json({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Teacher not found' },
-          });
-          return;
-        }
-
-        // Get classes assigned to this teacher
-        const classes = await authorizationService.getTeacherClassDetails(teacher.id);
-
-        res.json({
-          success: true,
-          data: classes,
-        });
-      } finally {
-        await prisma.$disconnect();
-      }
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch classes' },
-      });
-    }
+router.post('/', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const validatedData = createTeacherSchema.parse(req.body);
+    const teacher = await teacherService.createTeacher(validatedData);
+    res.status(201).json({ success: true, data: teacher });
+  } catch (error) {
+    handleError(error, res);
   }
-);
+});
 
 /**
- * GET /teacher/classes/:classId/roll
- * Get class roll with filtered student information based on access policy
- * 
- * Requirements: 2.3, 2.4, 7.7 - Teachers can only view assigned classes
- * and student information is filtered based on access policy
+ * GET /api/teachers
+ * List all teachers (admin only).
  */
-router.get(
-  '/classes/:classId/roll',
-  authenticate,
-  authorize('TEACHER', 'ADMIN'),
-  checkTeacherClassAccess((req) => req.params.classId),
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-        });
-        return;
-      }
+router.get('/', authorize(UserRole.ADMIN), async (_req: Request, res: Response) => {
+  try {
+    const teachers = await teacherService.listTeachers();
+    res.json({ success: true, data: teachers });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
 
-      const { classId } = req.params;
+/**
+ * GET /api/teachers/me
+ * Get the authenticated teacher's own profile.
+ * Requirements: 7.1 - Teacher can view their own profile
+ */
+router.get('/me', authorize(UserRole.TEACHER), async (req: Request, res: Response) => {
+  try {
+    const teacher = await teacherService.getTeacherByUserId(req.user!.userId);
+    res.json({ success: true, data: teacher });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
 
-      // Get teacher record
-      const { PrismaClient } = await import('@prisma/client');
-      const prisma = new PrismaClient();
+/**
+ * GET /api/teachers/:id
+ * Get a teacher profile by ID (admin or the teacher themselves).
+ */
+router.get('/:id', authorize(UserRole.ADMIN, UserRole.TEACHER), async (req: Request, res: Response) => {
+  try {
+    const teacher = await teacherService.getTeacherById(req.params.id);
 
-      try {
-        const teacher = await prisma.teacher.findUnique({
-          where: { userId: req.user.userId },
-        });
-
-        if (!teacher) {
-          res.status(404).json({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Teacher not found' },
-          });
-          return;
-        }
-
-        // Get class roll with filtered student information
-        const classRoll = await authorizationService.getClassRollForTeacher(
-          teacher.id,
-          classId
-        );
-
-        res.json({
-          success: true,
-          data: {
-            classId,
-            students: classRoll,
-          },
-        });
-      } finally {
-        await prisma.$disconnect();
-      }
-    } catch (error: any) {
-      if (error.message === 'Teacher does not have access to this class') {
+    // Teachers can only view their own profile
+    if (req.user!.role === UserRole.TEACHER) {
+      const ownProfile = await teacherService.getTeacherByUserId(req.user!.userId);
+      if (ownProfile.id !== teacher.id) {
         res.status(403).json({
           success: false,
-          error: { code: 'FORBIDDEN', message: error.message },
+          error: { code: 'FORBIDDEN', message: 'Insufficient permissions' },
         });
         return;
       }
-
-      res.status(500).json({
-        success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch class roll' },
-      });
     }
+
+    res.json({ success: true, data: teacher });
+  } catch (error) {
+    handleError(error, res);
   }
-);
+});
 
 /**
- * GET /teacher/access-policy
- * Get the current access policy for the authenticated teacher
- * 
- * Requirements: 2.4 - Display student information based on access policy
+ * PUT /api/teachers/me
+ * Update the authenticated teacher's own profile.
+ * Requirements: 7.1 - Teacher portal access
  */
-router.get(
-  '/access-policy',
-  authenticate,
-  authorize('TEACHER', 'ADMIN'),
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      if (!req.user) {
-        res.status(401).json({
-          success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
-        });
-        return;
-      }
+router.put('/me', authorize(UserRole.TEACHER), async (req: Request, res: Response) => {
+  try {
+    const validatedData = updateTeacherSchema.parse(req.body);
+    const teacher = await teacherService.getTeacherByUserId(req.user!.userId);
+    const updated = await teacherService.updateTeacher(teacher.id, validatedData);
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
 
-      // Get teacher record
-      const { PrismaClient } = await import('@prisma/client');
-      const prisma = new PrismaClient();
+/**
+ * PUT /api/teachers/:id
+ * Update a teacher profile by ID (admin only).
+ */
+router.put('/:id', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const validatedData = updateTeacherSchema.parse(req.body);
+    const updated = await teacherService.updateTeacher(req.params.id, validatedData);
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
 
-      try {
-        const teacher = await prisma.teacher.findUnique({
-          where: { userId: req.user.userId },
-        });
+/**
+ * DELETE /api/teachers/:id
+ * Delete a teacher account (admin only).
+ */
+router.delete('/:id', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    await teacherService.deleteTeacher(req.params.id);
+    res.json({ success: true, data: { message: 'Teacher deleted successfully' } });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
 
-        if (!teacher) {
-          res.status(404).json({
-            success: false,
-            error: { code: 'NOT_FOUND', message: 'Teacher not found' },
-          });
-          return;
-        }
+function handleError(error: unknown, res: Response): void {
+  if (error instanceof z.ZodError) {
+    res.status(400).json({
+      success: false,
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid input data',
+        details: error.errors.reduce(
+          (acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          },
+          {} as Record<string, string>
+        ),
+      },
+    });
+    return;
+  }
 
-        // Get access policy
-        const policy = await authorizationService.getTeacherAccessPolicy(teacher.id);
-
-        res.json({
-          success: true,
-          data: policy,
-        });
-      } finally {
-        await prisma.$disconnect();
-      }
-    } catch (error) {
-      res.status(500).json({
+  if (error instanceof Error) {
+    if (error.message === 'Teacher profile not found') {
+      res.status(404).json({
         success: false,
-        error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch access policy' },
+        error: { code: 'NOT_FOUND', message: error.message },
       });
+      return;
+    }
+
+    if (
+      error.message === 'Email already registered' ||
+      error.message === 'Cannot delete teacher with assigned classes'
+    ) {
+      res.status(409).json({
+        success: false,
+        error: { code: 'CONFLICT', message: error.message },
+      });
+      return;
     }
   }
-);
+
+  res.status(500).json({
+    success: false,
+    error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' },
+  });
+}
 
 export default router;

@@ -6,6 +6,7 @@ import { config } from './config/env';
 import authRoutes from './routes/auth.routes';
 import customerRoutes from './routes/customer.routes';
 import dancerRoutes from './routes/dancer.routes';
+import teacherRoutes from './routes/teacher.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -51,6 +52,9 @@ export const createApp = (): Application => {
 
   // Dancer routes
   app.use('/api/dancers', dancerRoutes);
+
+  // Teacher routes
+  app.use('/api/teachers', teacherRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

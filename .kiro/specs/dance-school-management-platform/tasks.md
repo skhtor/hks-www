@@ -90,7 +90,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 6: Teacher Class Visibility**
     - **Validates: Requirements 2.3**
 
-- [ ] 5. User service
+- [-] 5. User service
   - [x] 5.1 Implement customer profile management
     - Create customer profile CRUD endpoints
     - Implement househo ld management
@@ -106,7 +106,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle optional fields (medical notes, allergies, photo consent)
     - _Requirements: 1.4, 1.5_
   
-  - [ ] 5.4 Implement teacher profile management
+  - [x] 5.4 Implement teacher profile management
     - Create teacher account creation (admin only)
     - Implement teacher profile CRUD
     - _Requirements: 2.5, 7.1_
