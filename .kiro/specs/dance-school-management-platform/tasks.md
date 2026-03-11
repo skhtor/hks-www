@@ -90,7 +90,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 6: Teacher Class Visibility**
     - **Validates: Requirements 2.3**
 
-- [-] 5. User service
+- [x] 5. User service
   - [x] 5.1 Implement customer profile management
     - Create customer profile CRUD endpoints
     - Implement househo ld management
