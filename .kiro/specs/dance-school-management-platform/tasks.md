@@ -278,7 +278,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 30: Waitlist Progression**
     - **Validates: Requirements 15.3, 15.5**
 
-- [~] 13. Trial booking service
+- [x] 13. Trial booking service
   - [x] 13.1 Implement trial booking
     - Create trial booking endpoint
     - Apply trial pricing rules
