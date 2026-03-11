@@ -395,6 +395,93 @@ describe('EnrolmentService', () => {
     });
   });
 
+  describe('bulkEnrol', () => {
+    beforeEach(async () => {
+      await cleanEnrolments();
+    });
+
+    it('should enrol multiple dancers atomically', async () => {
+      // Create a second dancer
+      const dancer2 = await prisma.dancer.create({
+        data: {
+          householdId,
+          firstName: 'Bulk',
+          lastName: 'Dancer2',
+          dateOfBirth: new Date('2015-01-01'),
+          emergencyContact: { name: 'Parent', phone: '0400000000', relationship: 'Parent' },
+        },
+      });
+
+      const enrolments = await enrolmentService.bulkEnrol(
+        [
+          { dancerId, classId, startDate: new Date('2025-01-01') },
+          { dancerId: dancer2.id, classId: classId2, startDate: new Date('2025-01-01') },
+        ],
+        adminUserId
+      );
+
+      expect(enrolments).toHaveLength(2);
+      expect(enrolments[0].classId).toBe(classId);
+      expect(enrolments[1].classId).toBe(classId2);
+
+      const cls1 = await prisma.class.findUnique({ where: { id: classId } });
+      const cls2 = await prisma.class.findUnique({ where: { id: classId2 } });
+      expect(cls1!.enrolledCount).toBe(1);
+      expect(cls2!.enrolledCount).toBe(1);
+
+      await prisma.enrolment.deleteMany({ where: { dancerId: dancer2.id } });
+      await prisma.dancer.delete({ where: { id: dancer2.id } });
+    });
+
+    it('should roll back all enrolments if one fails (atomicity)', async () => {
+      // Fill class 1 to capacity (3) first
+      const household4 = await prisma.household.create({ data: { name: 'EnrolmentTest Bulk Family' } });
+      const fillers = await Promise.all(
+        [1, 2, 3].map((i) =>
+          prisma.dancer.create({
+            data: {
+              householdId: household4.id,
+              firstName: `Filler${i}`,
+              lastName: 'Dancer',
+              dateOfBirth: new Date('2015-01-01'),
+              emergencyContact: { name: 'Parent', phone: '0400000000', relationship: 'Parent' },
+            },
+          })
+        )
+      );
+      for (const d of fillers) {
+        await enrolmentService.createEnrolment({ dancerId: d.id, classId, startDate: new Date('2025-01-01') });
+      }
+
+      // Now bulk enrol: first item targets the full class — should fail atomically
+      await expect(
+        enrolmentService.bulkEnrol(
+          [
+            { dancerId, classId, startDate: new Date('2025-01-01') }, // will fail
+            { dancerId, classId: classId2, startDate: new Date('2025-01-01') },
+          ],
+          adminUserId
+        )
+      ).rejects.toThrow('Class is at full capacity');
+
+      // classId2 should NOT have been enrolled (rollback)
+      const cls2 = await prisma.class.findUnique({ where: { id: classId2 } });
+      expect(cls2!.enrolledCount).toBe(0);
+
+      // Cleanup
+      await prisma.enrolment.deleteMany({ where: { classId } });
+      await prisma.class.update({ where: { id: classId }, data: { enrolledCount: 0 } });
+      await prisma.dancer.deleteMany({ where: { householdId: household4.id } });
+      await prisma.household.delete({ where: { id: household4.id } });
+    });
+
+    it('should throw when no items provided', async () => {
+      await expect(
+        enrolmentService.bulkEnrol([], adminUserId)
+      ).rejects.toThrow('No enrolment items provided');
+    });
+  });
+
   describe('moveEnrolment', () => {
     let enrolmentId: string;
 

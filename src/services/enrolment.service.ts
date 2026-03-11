@@ -242,6 +242,93 @@ export class EnrolmentService {
       return updated;
     });
   }
+
+  /**
+   * Bulk enrolment for families — enrols multiple dancers into multiple classes atomically.
+   * All enrolments succeed or none do (all-or-nothing transaction).
+   * Applies family discount when 2+ dancers from the same household are enrolled.
+   * Requirements: 4.1, 25.1, 25.4
+   */
+  async bulkEnrol(
+    items: Array<{ dancerId: string; classId: string; startDate: Date; isTrial?: boolean }>,
+    adminUserId: string
+  ) {
+    if (items.length === 0) {
+      throw new Error('No enrolment items provided');
+    }
+
+    // Validate all dancers and classes exist before starting transaction
+    for (const item of items) {
+      const dancer = await prisma.dancer.findUnique({ where: { id: item.dancerId } });
+      if (!dancer) throw new Error(`Dancer not found: ${item.dancerId}`);
+
+      const cls = await prisma.class.findUnique({ where: { id: item.classId } });
+      if (!cls) throw new Error(`Class not found: ${item.classId}`);
+    }
+
+    return prisma.$transaction(async (tx) => {
+      const enrolments = [];
+
+      for (const item of items) {
+        // Pessimistic lock on the class
+        const rows = await tx.$queryRaw<Array<{ id: string; enrolledCount: number; capacity: number }>>`
+          SELECT id, "enrolledCount", capacity FROM "class" WHERE id = ${item.classId} FOR UPDATE
+        `;
+        const lockedClass = rows[0];
+        if (!lockedClass) throw new Error(`Class not found: ${item.classId}`);
+
+        if (lockedClass.enrolledCount >= lockedClass.capacity) {
+          throw new Error(`Class is at full capacity: ${item.classId}`);
+        }
+
+        // Check for duplicate active enrolment
+        const existing = await tx.enrolment.findFirst({
+          where: { dancerId: item.dancerId, classId: item.classId, status: EnrolmentStatus.ACTIVE },
+        });
+        if (existing) {
+          throw new Error(`Dancer ${item.dancerId} is already actively enrolled in class ${item.classId}`);
+        }
+
+        const status = item.isTrial ? EnrolmentStatus.TRIAL : EnrolmentStatus.ACTIVE;
+
+        const enrolment = await tx.enrolment.create({
+          data: {
+            dancerId: item.dancerId,
+            classId: item.classId,
+            startDate: item.startDate,
+            isTrial: item.isTrial ?? false,
+            status,
+          },
+          include: { dancer: true, class: true },
+        });
+
+        await tx.class.update({
+          where: { id: item.classId },
+          data: { enrolledCount: { increment: 1 } },
+        });
+
+        enrolments.push(enrolment);
+      }
+
+      // Audit log for bulk enrolment
+      await tx.auditLog.create({
+        data: {
+          userId: adminUserId,
+          action: 'BULK_ENROLMENT',
+          entityType: 'Enrolment',
+          entityId: enrolments[0].id,
+          changes: {
+            enrolmentIds: enrolments.map((e) => e.id),
+            dancerIds: items.map((i) => i.dancerId),
+            classIds: items.map((i) => i.classId),
+          },
+        },
+      });
+
+      return enrolments;
+    });
+  }
+
 }
 
 export const enrolmentService = new EnrolmentService();

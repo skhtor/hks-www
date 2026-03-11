@@ -27,6 +27,31 @@ const moveEnrolmentSchema = z.object({
 });
 
 /**
+ * POST /api/enrolments/bulk
+ * Bulk enrol multiple dancers (admin only). All-or-nothing transaction.
+ * Requirements: 4.1, 25.1, 25.4
+ */
+const bulkEnrolSchema = z.object({
+  items: z.array(z.object({
+    dancerId: z.string().min(1),
+    classId: z.string().min(1),
+    startDate: z.string().datetime().transform((v) => new Date(v)),
+    isTrial: z.boolean().optional(),
+  })).min(1, 'At least one enrolment item is required'),
+});
+
+router.post('/bulk', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const { items } = bulkEnrolSchema.parse(req.body);
+    const adminUserId = req.user!.userId;
+    const enrolments = await enrolmentService.bulkEnrol(items, adminUserId);
+    res.status(201).json({ success: true, data: enrolments });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
  * POST /api/enrolments
  * Create an enrolment (authenticated).
  * Requirements: 4.1, 4.4, 4.7, 19.5

@@ -225,7 +225,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 37: Concurrent Capacity Enforcement**
     - **Validates: Requirements 4.4, 4.7, 8.6, 19.5**
   
-  - [~] 11.3 Implement bulk enrolment for families
+  - [x] 11.3 Implement bulk enrolment for families
     - Create bulk enrolment endpoint
     - Ensure atomic transaction (all or nothing)
     - Calculate family discounts
