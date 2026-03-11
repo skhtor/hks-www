@@ -153,7 +153,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Optimize queries with proper indexes
     - _Requirements: 3.2_
   
-  - [~] 8.3 Write property tests for filtering
+  - [x] 8.3 Write property tests for filtering
     - **Property 8: Timetable Filter Correctness**
     - **Property 46: Location Filtering**
     - **Validates: Requirements 3.2, 28.3**
