@@ -1,6 +1,25 @@
 import { PrismaClient, PricingRuleType, DiscountType } from '@prisma/client';
+import { getRedisClient } from '../config/redis';
 
 const prisma = new PrismaClient();
+
+/**
+ * Invalidates all timetable cache keys in Redis.
+ * Called when pricing rules change to ensure immediate effect.
+ * Requirements: 22.6
+ */
+async function invalidateTimetableCache(): Promise<void> {
+  try {
+    const redis = getRedisClient();
+    if (!redis.isOpen) return;
+    const keys = await redis.keys('timetable:*');
+    if (keys.length > 0) {
+      await redis.del(keys);
+    }
+  } catch {
+    // Cache invalidation failure is non-fatal
+  }
+}
 
 // ─── Fee Calculation Types ────────────────────────────────────────────────────
 
@@ -147,7 +166,7 @@ export class FeeService {
       throw new Error('Pricing rule not found');
     }
 
-    return prisma.pricingRule.update({
+    const updated = await prisma.pricingRule.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
@@ -162,6 +181,9 @@ export class FeeService {
       },
       include: { location: true },
     });
+
+    await invalidateTimetableCache();
+    return updated;
   }
 
   /**
@@ -183,6 +205,7 @@ export class FeeService {
     }
 
     await prisma.pricingRule.delete({ where: { id } });
+    await invalidateTimetableCache();
   }
 
   /**

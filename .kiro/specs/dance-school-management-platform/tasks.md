@@ -199,12 +199,12 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 18: Proration Calculation**
     - **Validates: Requirements 5.6**
   
-  - [ ] 9.7 Implement configuration immediate effect
+  - [x] 9.7 Implement configuration immediate effect
     - Ensure pricing rule changes apply immediately
     - Invalidate relevant caches on update
     - _Requirements: 22.6_
   
-  - [ ] 9.8 Write property test for configuration updates
+  - [-] 9.8 Write property test for configuration updates
     - **Property 40: Configuration Immediate Effect**
     - **Validates: Requirements 22.6**
 
