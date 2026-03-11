@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes';
 import customerRoutes from './routes/customer.routes';
 import dancerRoutes from './routes/dancer.routes';
 import teacherRoutes from './routes/teacher.routes';
+import classRoutes from './routes/class.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -55,6 +56,9 @@ export const createApp = (): Application => {
 
   // Teacher routes
   app.use('/api/teachers', teacherRoutes);
+
+  // Class routes
+  app.use('/api/classes', classRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

@@ -116,7 +116,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
 
 
 - [~] 7. Class service
-  - [~] 7.1 Implement class CRUD operations
+  - [x] 7.1 Implement class CRUD operations
     - Create class creation endpoint with validation
     - Implement class update and delete endpoints
     - Validate required fields (name, style, level, time, location, capacity, teacher)
