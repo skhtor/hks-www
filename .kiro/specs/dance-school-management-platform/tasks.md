@@ -219,7 +219,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Update class enrolled count atomically
     - _Requirements: 4.1, 4.4, 4.7, 19.5_
   
-  - [~] 11.2 Write property tests for capacity enforcement
+  - [x] 11.2 Write property tests for capacity enforcement
     - **Property 12: Capacity Enforcement**
     - **Property 13: Enrolment Count Invariant**
     - **Property 37: Concurrent Capacity Enforcement**

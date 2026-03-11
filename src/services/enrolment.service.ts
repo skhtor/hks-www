@@ -32,8 +32,11 @@ export class EnrolmentService {
     }
 
     return prisma.$transaction(async (tx) => {
-      // Lock the class row and check capacity (pessimistic locking via transaction)
-      const lockedClass = await tx.class.findUnique({ where: { id: classId } });
+      // Pessimistic lock: SELECT ... FOR UPDATE prevents concurrent over-enrolment
+      const rows = await tx.$queryRaw<Array<{ id: string; enrolledCount: number; capacity: number }>>`
+        SELECT id, "enrolledCount", capacity FROM "class" WHERE id = ${classId} FOR UPDATE
+      `;
+      const lockedClass = rows[0];
       if (!lockedClass) {
         throw new Error('Class not found');
       }
