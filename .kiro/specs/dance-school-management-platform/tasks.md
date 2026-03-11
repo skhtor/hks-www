@@ -148,7 +148,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Implement caching for performance
     - _Requirements: 3.1, 3.5_
   
-  - [~] 8.2 Implement timetable filtering
+  - [x] 8.2 Implement timetable filtering
     - Add filters for age group, level, style, location, teacher, day
     - Optimize queries with proper indexes
     - _Requirements: 3.2_

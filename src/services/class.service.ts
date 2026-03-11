@@ -361,18 +361,43 @@ export class ClassService {
    */
   async getTimetable(filters: TimetableFilters = {}) {
     const now = new Date();
-    const where: Record<string, unknown> = {
+
+    // Build base where clause for active classes
+    const baseWhere: Record<string, unknown> = {
       OR: [{ endDate: null }, { endDate: { gt: now } }],
     };
 
-    if (filters.level) where.level = filters.level;
-    if (filters.style) where.style = filters.style;
-    if (filters.locationId) where.locationId = filters.locationId;
-    if (filters.teacherId) where.teacherId = filters.teacherId;
-    if (filters.dayOfWeek) where.dayOfWeek = filters.dayOfWeek;
+    if (filters.level) baseWhere.level = filters.level;
+    if (filters.style) baseWhere.style = filters.style;
+    if (filters.locationId) baseWhere.locationId = filters.locationId;
+    if (filters.teacherId) baseWhere.teacherId = filters.teacherId;
+    if (filters.dayOfWeek) baseWhere.dayOfWeek = filters.dayOfWeek;
+
+    // ageGroup filter: parse as number, include classes where ageRange is null
+    // or ageRange.min <= ageGroup <= ageRange.max
+    // Uses raw SQL for reliable JSON field comparison (Requirements: 3.2)
+    if (filters.ageGroup !== undefined) {
+      const age = parseInt(filters.ageGroup, 10);
+      if (!isNaN(age)) {
+        // Get IDs of classes matching the age filter using raw SQL
+        const matchingIds = await prisma.$queryRaw<Array<{ id: string }>>`
+          SELECT id FROM "class"
+          WHERE (
+            "ageRange" IS NULL
+            OR (
+              ("ageRange"->>'min' IS NULL OR ("ageRange"->>'min')::int <= ${age})
+              AND
+              ("ageRange"->>'max' IS NULL OR ("ageRange"->>'max')::int >= ${age})
+            )
+          )
+        `;
+        const ids = matchingIds.map((r) => r.id);
+        baseWhere.id = { in: ids };
+      }
+    }
 
     return prisma.class.findMany({
-      where,
+      where: baseWhere,
       include: {
         teacher: true,
         location: true,
