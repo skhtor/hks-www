@@ -94,9 +94,9 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - [x] 5.1 Implement customer profile management
     - Create customer profile CRUD endpoints
     - Implement househo ld management
-    - _Requirements: 1.3, 1.6_
+    - _Requirements: 1.3, 1.6 _
   
-  - [ ] 5.2 Write property test for profile updates
+  - [x] 5.2 Write property test for profile updates
     - **Property 3: Profile Update Persistence**
     - **Validates: Requirements 1.6**
   
