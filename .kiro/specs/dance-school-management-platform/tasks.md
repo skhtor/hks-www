@@ -204,7 +204,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Invalidate relevant caches on update
     - _Requirements: 22.6_
   
-  - [-] 9.8 Write property test for configuration updates
+  - [x] 9.8 Write property test for configuration updates
     - **Property 40: Configuration Immediate Effect**
     - **Validates: Requirements 22.6**
 

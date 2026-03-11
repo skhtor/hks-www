@@ -377,4 +377,38 @@ describe('FeeService Property-Based Tests', () => {
       );
     });
   });
+
+  /**
+   * Property 40: Configuration Immediate Effect
+   * After updating a pricing rule's monthlyFee, the next calculateFee call
+   * must reflect the new fee immediately (no stale cache).
+   * Validates: Requirements 22.6
+   */
+  describe('Property 40: Configuration Immediate Effect', () => {
+    it('should reflect updated pricing rule fee immediately after update', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.integer({ min: 100, max: 300 }), // original fee
+          fc.integer({ min: 301, max: 600 }), // new fee (distinct range)
+          async (originalFee, newFee) => {
+            const rule = await createPricingRule(originalFee, 95, 95);
+
+            try {
+              const before = await feeService.calculateFee({ classCount: 95 });
+              expect(before.subtotal).toBe(originalFee);
+
+              await feeService.updatePricingRule(rule.id, { monthlyFee: newFee });
+
+              const after = await feeService.calculateFee({ classCount: 95 });
+              expect(after.subtotal).toBe(newFee);
+            } finally {
+              await prisma.pricingRule.delete({ where: { id: rule.id } });
+              createdPricingRuleIds.splice(createdPricingRuleIds.indexOf(rule.id), 1);
+            }
+          }
+        ),
+        { numRuns: 5 }
+      );
+    });
+  });
 });
