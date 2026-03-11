@@ -302,25 +302,25 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
 
 
 - [~] 15. Payment service
-  - [~] 15.1 Integrate Stripe payment gateway
+  - [x] 15.1 Integrate Stripe payment gateway
     - Set up Stripe SDK
     - Implement payment intent creation
     - Handle webhook events
     - _Requirements: 6.2_
   
-  - [~] 15.2 Implement payment processing
+  - [x] 15.2 Implement payment processing
     - Create payment endpoint
     - Display fee breakdown at checkout
     - Process payment via Stripe
     - Create payment record with status
     - _Requirements: 6.1, 6.3_
   
-  - [~] 15.3 Write property tests for payment status
+  - [x] 15.3 Write property tests for payment status
     - **Property 21: Payment Status Consistency**
     - **Property 22: Payment State Machine**
     - **Validates: Requirements 6.3, 6.7**
   
-  - [~] 15.4 Implement receipt generation
+  - [x] 15.4 Implement receipt generation
     - Generate PDF receipts
     - Send receipt emails automatically
     - _Requirements: 6.4_
@@ -331,11 +331,11 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle recurring charges
     - _Requirements: 6.6, 18.3_
   
-  - [~] 15.6 Write property test for card security
+  - [x] 15.6 Write property test for card security
     - **Property 35: Card Number Security**
     - **Validates: Requirements 18.3**
   
-  - [~] 15.7 Implement refund processing
+  - [x] 15.7 Implement refund processing
     - Create refund endpoint
     - Process refunds via Stripe
     - Update payment status

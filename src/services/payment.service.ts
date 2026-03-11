@@ -1,6 +1,29 @@
 import { PrismaClient, PaymentStatus, InvoiceStatus } from '@prisma/client';
 import Stripe from 'stripe';
 
+export interface ReceiptLineItem {
+  description: string;
+  amount: number;
+  type: string;
+}
+
+export interface Receipt {
+  receiptNumber: string;
+  paymentId: string;
+  invoiceNumber: string;
+  issuedAt: Date;
+  customer: { id: string; name: string };
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  gatewayPaymentId: string | null;
+  lineItems: ReceiptLineItem[];
+  subtotal: number;
+  discountAmount: number;
+  gstAmount: number;
+  total: number;
+}
+
 const prisma = new PrismaClient();
 
 // Gateway abstraction — allows test injection without live Stripe
@@ -162,6 +185,61 @@ export class PaymentService {
       where: { invoiceId },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Marks a payment as FAILED (e.g. from Stripe webhook payment_intent.payment_failed).
+   * Requirements: 6.5
+   */
+  async markPaymentFailed(gatewayPaymentId: string) {
+    const payment = await prisma.payment.findFirst({ where: { gatewayPaymentId } });
+    if (!payment) throw new Error('Payment record not found');
+
+    return prisma.payment.update({
+      where: { id: payment.id },
+      data: { status: PaymentStatus.FAILED },
+    });
+  }
+
+  /**
+   * Generates a structured JSON receipt for a completed payment.
+   * Requirements: 6.4
+   */
+  async generateReceipt(paymentId: string): Promise<Receipt> {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        invoice: {
+          include: { customer: true },
+        },
+      },
+    });
+
+    if (!payment) throw new Error('Payment not found');
+    if (payment.status !== PaymentStatus.PAID) throw new Error('Receipt only available for paid payments');
+
+    const invoice = payment.invoice;
+    const customer = invoice.customer;
+
+    return {
+      receiptNumber: `REC-${payment.id.slice(0, 8).toUpperCase()}`,
+      paymentId: payment.id,
+      invoiceNumber: invoice.invoiceNumber,
+      issuedAt: payment.paidAt ?? payment.createdAt,
+      customer: {
+        id: customer.id,
+        name: customer.name,
+      },
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      status: payment.status,
+      gatewayPaymentId: payment.gatewayPaymentId,
+      lineItems: invoice.lineItems as unknown as ReceiptLineItem[],
+      subtotal: Number(invoice.subtotal),
+      discountAmount: Number(invoice.discountAmount),
+      gstAmount: Number(invoice.gstAmount),
+      total: Number(invoice.total),
+    };
   }
 }
 

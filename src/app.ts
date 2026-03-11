@@ -11,6 +11,7 @@ import classRoutes from './routes/class.routes';
 import timetableRoutes from './routes/timetable.routes';
 import feeRoutes from './routes/fee.routes';
 import enrolmentRoutes from './routes/enrolment.routes';
+import paymentRoutes from './routes/payment.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -71,6 +72,9 @@ export const createApp = (): Application => {
 
   // Enrolment routes
   app.use('/api/enrolments', enrolmentRoutes);
+
+  // Payment routes (webhook must be before express.json to receive raw body)
+  app.use('/api/payments', paymentRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
