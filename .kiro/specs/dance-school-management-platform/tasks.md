@@ -297,7 +297,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Track conversion metrics
     - _Requirements: 16.3, 16.4_
 
-- [ ] 14. Checkpoint - Enrolment and waitlist
+- [x] 14. Checkpoint - Enrolment and waitlist
   - Ensure all tests pass, ask the user if questions arise.
 
 
