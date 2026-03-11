@@ -213,46 +213,46 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
 
 
 - [ ] 11. Enrolment service
-  - [ ] 11.1 Implement enrolment creation with capacity enforcement
+  - [x] 11.1 Implement enrolment creation with capacity enforcement
     - Create enrolment endpoint with capacity checking
     - Implement pessimistic locking to prevent race conditions
     - Update class enrolled count atomically
     - _Requirements: 4.1, 4.4, 4.7, 19.5_
   
-  - [ ] 11.2 Write property tests for capacity enforcement
+  - [~] 11.2 Write property tests for capacity enforcement
     - **Property 12: Capacity Enforcement**
     - **Property 13: Enrolment Count Invariant**
     - **Property 37: Concurrent Capacity Enforcement**
     - **Validates: Requirements 4.4, 4.7, 8.6, 19.5**
   
-  - [ ] 11.3 Implement bulk enrolment for families
+  - [~] 11.3 Implement bulk enrolment for families
     - Create bulk enrolment endpoint
     - Ensure atomic transaction (all or nothing)
     - Calculate family discounts
     - _Requirements: 4.1, 25.1, 25.4_
   
-  - [ ] 11.4 Write property test for bulk enrolment atomicity
+  - [~] 11.4 Write property test for bulk enrolment atomicity
     - **Property 43: Bulk Enrolment Atomicity**
     - **Validates: Requirements 25.4**
   
-  - [ ] 11.5 Implement enrolment cancellation
+  - [~] 11.5 Implement enrolment cancellation
     - Create cancellation endpoint with effective date
     - Apply refund policy calculations
     - Update class capacity
     - Create audit log entry
     - _Requirements: 9.2, 9.3, 9.6, 26.2_
   
-  - [ ] 11.6 Write property tests for cancellation
+  - [~] 11.6 Write property tests for cancellation
     - **Property 14: Capacity Adjustment on Move**
     - **Property 44: Refund Calculation**
     - **Validates: Requirements 9.1, 26.2**
   
-  - [ ] 11.7 Implement enrolment move between classes
+  - [~] 11.7 Implement enrolment move between classes
     - Create move endpoint
     - Update both class capacities atomically
     - _Requirements: 9.1_
   
-  - [ ] 11.8 Write property test for audit logging
+  - [~] 11.8 Write property test for audit logging
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.6**
 

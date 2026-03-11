@@ -10,6 +10,7 @@ import teacherRoutes from './routes/teacher.routes';
 import classRoutes from './routes/class.routes';
 import timetableRoutes from './routes/timetable.routes';
 import feeRoutes from './routes/fee.routes';
+import enrolmentRoutes from './routes/enrolment.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -67,6 +68,9 @@ export const createApp = (): Application => {
 
   // Fee routes
   app.use('/api/fees', feeRoutes);
+
+  // Enrolment routes
+  app.use('/api/enrolments', enrolmentRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
