@@ -1,0 +1,395 @@
+import { Router, Request, Response } from 'express';
+import { z } from 'zod';
+import { authService } from '../services/auth.service';
+import { UserRole } from '@prisma/client';
+
+const router = Router();
+
+// Validation schemas
+const registerSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+  role: z.nativeEnum(UserRole).optional(),
+});
+
+const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
+
+const passwordResetRequestSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+const passwordResetSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  newPassword: z.string().min(1, 'New password is required'),
+});
+
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(1, 'New password is required'),
+});
+
+/**
+ * POST /api/auth/register
+ * Register a new user account
+ */
+router.post('/register', async (req: Request, res: Response) => {
+  try {
+    const validatedData = registerSchema.parse(req.body);
+
+    const result = await authService.register(validatedData);
+
+    res.status(201).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+
+    if (error instanceof Error) {
+      // Check for specific error types
+      if (error.message === 'Email already registered') {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'EMAIL_EXISTS',
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.message.includes('Password must')) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'WEAK_PASSWORD',
+            message: error.message,
+          },
+        });
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred during registration',
+      },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/login
+ * Login with email and password
+ */
+router.post('/login', async (req: Request, res: Response) => {
+  try {
+    const validatedData = loginSchema.parse(req.body);
+
+    const result = await authService.login(validatedData);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+
+    if (error instanceof Error && error.message === 'Invalid credentials') {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_CREDENTIALS',
+          message: error.message,
+        },
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred during login',
+      },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/refresh
+ * Refresh access token using refresh token
+ */
+router.post('/refresh', async (req: Request, res: Response) => {
+  try {
+    const validatedData = refreshTokenSchema.parse(req.body);
+
+    const result = await authService.refreshToken(validatedData.refreshToken);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+
+    if (error instanceof Error && error.message.includes('Invalid or expired')) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_TOKEN',
+          message: error.message,
+        },
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred during token refresh',
+      },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password-request
+ * Request a password reset token
+ */
+router.post('/reset-password-request', async (req: Request, res: Response) => {
+  try {
+    const validatedData = passwordResetRequestSchema.parse(req.body);
+
+    const result = await authService.requestPasswordReset(validatedData.email);
+
+    // In production, send email with reset link
+    // For now, return token in response (development only)
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'If the email exists, a reset link will be sent',
+        // Remove token from response in production
+        token: result.token,
+        expiresAt: result.expiresAt,
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+
+    // Always return success to prevent email enumeration
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'If the email exists, a reset link will be sent',
+      },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Reset password using reset token
+ */
+router.post('/reset-password', async (req: Request, res: Response) => {
+  try {
+    const validatedData = passwordResetSchema.parse(req.body);
+
+    await authService.resetPassword(validatedData.token, validatedData.newPassword);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'Password has been reset successfully',
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+
+    if (error instanceof Error) {
+      if (error.message.includes('Password must')) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'WEAK_PASSWORD',
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.message.includes('Invalid or expired')) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'INVALID_TOKEN',
+            message: error.message,
+          },
+        });
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred during password reset',
+      },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/change-password
+ * Change password for authenticated user
+ * Note: This endpoint requires authentication middleware (to be implemented)
+ */
+router.post('/change-password', async (req: Request, res: Response) => {
+  try {
+    const validatedData = changePasswordSchema.parse(req.body);
+
+    // TODO: Get userId from authenticated user (req.user)
+    // For now, expect userId in body (development only)
+    const userId = (req.body as any).userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        },
+      });
+    }
+
+    await authService.changePassword(userId, validatedData.oldPassword, validatedData.newPassword);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'Password has been changed successfully',
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+
+    if (error instanceof Error) {
+      if (error.message.includes('Password must')) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'WEAK_PASSWORD',
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.message === 'Current password is incorrect') {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'INVALID_PASSWORD',
+            message: error.message,
+          },
+        });
+      }
+
+      if (error.message === 'User not found') {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'USER_NOT_FOUND',
+            message: error.message,
+          },
+        });
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred during password change',
+      },
+    });
+  }
+});
+
+export default router;

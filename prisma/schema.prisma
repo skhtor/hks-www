@@ -1,0 +1,452 @@
+// Prisma Schema for Dance School Management Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Authentication
+model UserAccount {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  role         UserRole
+  mfaEnabled   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  customer Customer?
+  teacher  Teacher?
+  auditLogs AuditLog[]
+
+  @@index([email])
+  @@index([role])
+  @@map("user_account")
+}
+
+enum UserRole {
+  PUBLIC
+  CUSTOMER
+  TEACHER
+  ADMIN
+}
+
+// Customer and Household Management
+model Customer {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  householdId String
+  name        String
+  mobile      String
+  address     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user         UserAccount        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household    Household          @relation(fields: [householdId], references: [id])
+  invoices     Invoice[]
+  payments     Payment[]
+  xeroContact  XeroContact?
+  notifications NotificationLog[]
+
+  @@index([householdId])
+  @@map("customer")
+}
+
+model Household {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  customers Customer[]
+  dancers   Dancer[]
+  invoices  Invoice[]
+
+  @@map("household")
+}
+
+model Dancer {
+  id               String   @id @default(uuid())
+  householdId      String
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime
+  emergencyContact Json
+  medicalNotes     String?
+  allergies        String?
+  photoConsent     Boolean  @default(false)
+  skillLevel       String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  household         Household           @relation(fields: [householdId], references: [id])
+  enrolments        Enrolment[]
+  waitlistEntries   WaitlistEntry[]
+  attendanceRecords AttendanceRecord[]
+
+  @@index([householdId])
+  @@map("dancer")
+}
+
+// Teacher Management
+model Teacher {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  name        String
+  email       String
+  bio         String?
+  specialties String[]
+  photoUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user              UserAccount        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classes           Class[]
+  attendanceMarked  AttendanceRecord[] @relation("MarkedBy")
+
+  @@map("teacher")
+}
+
+// Location and Class Management
+model Location {
+  id           String   @id @default(uuid())
+  name         String
+  address      Json
+  contactPhone String?
+  createdAt    DateTime @default(now())
+
+  classes      Class[]
+  pricingRules PricingRule[]
+
+  @@map("location")
+}
+
+model Class {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  style         String
+  level         String
+  ageRange      Json?
+  dayOfWeek     DayOfWeek
+  startTime     String
+  duration      Int
+  locationId    String
+  roomId        String?
+  teacherId     String
+  capacity      Int
+  enrolledCount Int       @default(0)
+  startDate     DateTime?
+  endDate       DateTime?
+  pricingRuleId String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  location          Location           @relation(fields: [locationId], references: [id])
+  teacher           Teacher            @relation(fields: [teacherId], references: [id])
+  pricingRule       PricingRule        @relation(fields: [pricingRuleId], references: [id])
+  enrolments        Enrolment[]
+  waitlistEntries   WaitlistEntry[]
+  attendanceRecords AttendanceRecord[]
+
+  @@index([teacherId])
+  @@index([locationId])
+  @@index([dayOfWeek, startTime])
+  @@map("class")
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+// Enrolment Management
+model Enrolment {
+  id        String           @id @default(uuid())
+  dancerId  String
+  classId   String
+  status    EnrolmentStatus
+  startDate DateTime
+  endDate   DateTime?
+  isTrial   Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  dancer            Dancer             @relation(fields: [dancerId], references: [id])
+  class             Class              @relation(fields: [classId], references: [id])
+  attendanceRecords AttendanceRecord[]
+
+  @@index([dancerId])
+  @@index([classId])
+  @@index([status])
+  @@index([classId, status])
+  @@map("enrolment")
+}
+
+enum EnrolmentStatus {
+  ACTIVE
+  CANCELLED
+  COMPLETED
+  TRIAL
+}
+
+// Pricing and Discounts
+model PricingRule {
+  id            String          @id @default(uuid())
+  name          String
+  type          PricingRuleType
+  classCountMin Int
+  classCountMax Int?
+  monthlyFee    Decimal         @db.Decimal(10, 2)
+  termFee       Decimal?        @db.Decimal(10, 2)
+  locationId    String?
+  priority      Int
+  active        Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  location Location? @relation(fields: [locationId], references: [id])
+  classes  Class[]
+
+  @@map("pricing_rule")
+}
+
+enum PricingRuleType {
+  PER_CLASS
+  TIERED_BUNDLE
+  TERM_BASED
+}
+
+model DiscountRule {
+  id                  String       @id @default(uuid())
+  name                String
+  type                DiscountType
+  value               Decimal      @db.Decimal(10, 2)
+  eligibilityCriteria Json
+  priority            Int
+  active              Boolean      @default(true)
+  startDate           DateTime?
+  endDate             DateTime?
+  createdAt           DateTime     @default(now())
+
+  @@map("discount_rule")
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FAMILY
+  CONCESSION
+  TRIAL
+}
+
+// Invoicing and Payments
+model Invoice {
+  id             String        @id @default(uuid())
+  customerId     String
+  householdId    String
+  invoiceNumber  String        @unique
+  subtotal       Decimal       @db.Decimal(10, 2)
+  discountAmount Decimal       @db.Decimal(10, 2)
+  gstAmount      Decimal       @db.Decimal(10, 2)
+  total          Decimal       @db.Decimal(10, 2)
+  status         InvoiceStatus
+  dueDate        DateTime
+  paidDate       DateTime?
+  xeroInvoiceId  String?
+  lineItems      Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  customer     Customer      @relation(fields: [customerId], references: [id])
+  household    Household     @relation(fields: [householdId], references: [id])
+  payments     Payment[]
+  xeroInvoice  XeroInvoice?
+
+  @@index([customerId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoice")
+}
+
+enum InvoiceStatus {
+  DUE
+  PAID
+  OVERDUE
+  FAILED
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  invoiceId         String
+  customerId        String
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("AUD")
+  status            PaymentStatus
+  gatewayPaymentId  String?
+  paymentMethod     Json?
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+
+  invoice  Invoice  @relation(fields: [invoiceId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([invoiceId])
+  @@index([customerId])
+  @@map("payment")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+// Xero Integration
+model XeroContact {
+  id            String   @id @default(uuid())
+  customerId    String   @unique
+  xeroContactId String   @unique
+  lastSyncedAt  DateTime
+  createdAt     DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("xero_contact")
+}
+
+model XeroInvoice {
+  id            String   @id @default(uuid())
+  invoiceId     String   @unique
+  xeroInvoiceId String   @unique
+  lastSyncedAt  DateTime
+  createdAt     DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@index([invoiceId])
+  @@map("xero_invoice")
+}
+
+// Waitlist Management
+model WaitlistEntry {
+  id        String    @id @default(uuid())
+  dancerId  String
+  classId   String
+  position  Int
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+
+  dancer Dancer @relation(fields: [dancerId], references: [id])
+  class  Class  @relation(fields: [classId], references: [id])
+
+  @@index([classId, position])
+  @@index([dancerId])
+  @@map("waitlist_entry")
+}
+
+// Attendance Tracking
+model AttendanceRecord {
+  id          String           @id @default(uuid())
+  enrolmentId String
+  classId     String
+  dancerId    String
+  classDate   DateTime
+  status      AttendanceStatus
+  notes       String?
+  markedAt    DateTime
+  markedBy    String
+
+  enrolment Enrolment   @relation(fields: [enrolmentId], references: [id])
+  class     Class       @relation(fields: [classId], references: [id])
+  dancer    Dancer      @relation(fields: [dancerId], references: [id])
+  teacher   Teacher     @relation("MarkedBy", fields: [markedBy], references: [id])
+
+  @@index([classId, classDate])
+  @@index([dancerId])
+  @@map("attendance_record")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+// Sync and Notification Logs
+model SyncLog {
+  id           String       @id @default(uuid())
+  entityType   String
+  entityId     String
+  syncType     SyncType
+  success      Boolean
+  errorMessage String?
+  errorCode    String?
+  retryCount   Int          @default(0)
+  lastRetryAt  DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([entityType, entityId])
+  @@index([success, retryCount])
+  @@map("sync_log")
+}
+
+enum SyncType {
+  CONTACT
+  INVOICE
+  PAYMENT
+}
+
+model NotificationLog {
+  id         String           @id @default(uuid())
+  customerId String
+  type       NotificationType
+  templateId String
+  variables  Json
+  status     String
+  sentAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("notification_log")
+}
+
+enum NotificationType {
+  PAYMENT_CONFIRMATION
+  PAYMENT_REMINDER
+  PAYMENT_OVERDUE
+  TERM_REMINDER
+  CLASS_CHANGE
+  WAITLIST_OFFER
+  TRIAL_FOLLOWUP
+}
+
+// Audit Logging
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String
+  action     String
+  entityType String
+  entityId   String
+  changes    Json
+  createdAt  DateTime @default(now())
+
+  user UserAccount @relation(fields: [userId], references: [id])
+
+  @@map("audit_log")
+}
