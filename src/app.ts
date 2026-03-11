@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import { config } from './config/env';
 import authRoutes from './routes/auth.routes';
 import customerRoutes from './routes/customer.routes';
+import dancerRoutes from './routes/dancer.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -47,6 +48,9 @@ export const createApp = (): Application => {
 
   // Customer routes
   app.use('/api/customers', customerRoutes);
+
+  // Dancer routes
+  app.use('/api/dancers', dancerRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
