@@ -279,19 +279,19 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Validates: Requirements 15.3, 15.5**
 
 - [ ] 13. Trial booking service
-  - [ ] 13.1 Implement trial booking
+  - [x] 13.1 Implement trial booking
     - Create trial booking endpoint
     - Apply trial pricing rules
     - Create single-session enrolment with isTrial flag
     - Enforce trial limits per dancer/class
     - _Requirements: 16.1, 16.2, 16.5_
   
-  - [ ] 13.2 Write property tests for trial bookings
+  - [x] 13.2 Write property tests for trial bookings
     - **Property 31: Trial Enrolment Creation**
     - **Property 32: Trial Booking Limits**
     - **Validates: Requirements 16.2, 16.5**
   
-  - [ ] 13.3 Implement trial conversion
+  - [x] 13.3 Implement trial conversion
     - Create conversion endpoint
     - Update enrolment status from trial to active
     - Track conversion metrics
