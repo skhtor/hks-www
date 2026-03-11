@@ -141,7 +141,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Prevent deletion of classes with active enrolments
     - _Requirements: 8.4_
 
-- [ ] 8. Timetable service
+- [x] 8. Timetable service
   - [x] 8.1 Implement timetable query endpoint
     - Create endpoint to list all active classes
     - Support week grid and list view formats
@@ -256,7 +256,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.6**
 
-- [ ] 12. Waitlist service
+- [~] 12. Waitlist service
   - [x] 12.1 Implement waitlist management
     - Create join waitlist endpoint
     - Assign sequential positions
@@ -278,7 +278,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 30: Waitlist Progression**
     - **Validates: Requirements 15.3, 15.5**
 
-- [ ] 13. Trial booking service
+- [~] 13. Trial booking service
   - [x] 13.1 Implement trial booking
     - Create trial booking endpoint
     - Apply trial pricing rules
@@ -301,26 +301,26 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 15. Payment service
-  - [ ] 15.1 Integrate Stripe payment gateway
+- [~] 15. Payment service
+  - [~] 15.1 Integrate Stripe payment gateway
     - Set up Stripe SDK
     - Implement payment intent creation
     - Handle webhook events
     - _Requirements: 6.2_
   
-  - [ ] 15.2 Implement payment processing
+  - [~] 15.2 Implement payment processing
     - Create payment endpoint
     - Display fee breakdown at checkout
     - Process payment via Stripe
     - Create payment record with status
     - _Requirements: 6.1, 6.3_
   
-  - [ ] 15.3 Write property tests for payment status
+  - [~] 15.3 Write property tests for payment status
     - **Property 21: Payment Status Consistency**
     - **Property 22: Payment State Machine**
     - **Validates: Requirements 6.3, 6.7**
   
-  - [ ] 15.4 Implement receipt generation
+  - [~] 15.4 Implement receipt generation
     - Generate PDF receipts
     - Send receipt emails automatically
     - _Requirements: 6.4_
@@ -331,169 +331,169 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle recurring charges
     - _Requirements: 6.6, 18.3_
   
-  - [ ] 15.6 Write property test for card security
+  - [~] 15.6 Write property test for card security
     - **Property 35: Card Number Security**
     - **Validates: Requirements 18.3**
   
-  - [ ] 15.7 Implement refund processing
+  - [~] 15.7 Implement refund processing
     - Create refund endpoint
     - Process refunds via Stripe
     - Update payment status
     - _Requirements: 9.3, 26.3_
 
-- [ ] 16. Invoice service
-  - [ ] 16.1 Implement invoice generation
+- [~] 16. Invoice service
+  - [~] 16.1 Implement invoice generation
     - Create invoice on enrolment confirmation
     - Generate line items with descriptions
     - Calculate totals with GST
     - Use idempotency keys
     - _Requirements: 11.1, 19.1, 19.4_
   
-  - [ ] 16.2 Write property tests for invoices
+  - [~] 16.2 Write property tests for invoices
     - **Property 20: Invoice Total Integrity**
     - **Property 36: Invoice Generation Idempotency**
     - **Validates: Requirements 19.1, 19.4**
   
-  - [ ] 16.3 Implement invoice status management
+  - [~] 16.3 Implement invoice status management
     - Track invoice statuses (Due, Paid, Overdue, Failed)
     - Update status on payment
     - Send overdue notifications
     - _Requirements: 6.7, 6.8_
 
-- [ ] 17. Xero integration service
-  - [ ] 17.1 Set up Xero OAuth 2.0
+- [~] 17. Xero integration service
+  - [~] 17.1 Set up Xero OAuth 2.0
     - Implement OAuth flow
     - Store and refresh access tokens securely
     - _Requirements: 10.5, 18.4_
   
-  - [ ] 17.2 Implement contact synchronization
+  - [~] 17.2 Implement contact synchronization
     - Create or match Xero contacts by email
     - Sync customer profile updates
     - Use idempotency to prevent duplicates
     - _Requirements: 10.1, 10.2, 10.4, 10.6_
   
-  - [ ] 17.3 Write property tests for contact sync
+  - [~] 17.3 Write property tests for contact sync
     - **Property 23: Contact Sync Idempotency**
     - **Property 24: Contact Email Uniqueness**
     - **Validates: Requirements 10.1, 10.4, 10.6**
   
-  - [ ] 17.4 Implement invoice synchronization
+  - [~] 17.4 Implement invoice synchronization
     - Create invoices in Xero with line items
     - Apply configured account codes and tax rates
     - Apply tracking categories
     - Use idempotency keys
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
   
-  - [ ] 17.5 Write property test for invoice sync
+  - [~] 17.5 Write property test for invoice sync
     - **Property 25: Invoice Generation Idempotency**
     - **Validates: Requirements 11.1, 11.5**
   
-  - [ ] 17.6 Implement payment reconciliation
+  - [~] 17.6 Implement payment reconciliation
     - Mark Xero invoices as paid
     - Create payment records in Xero
     - Handle partial payments
     - _Requirements: 12.1, 12.2, 12.4_
   
-  - [ ] 17.7 Write property tests for payment reconciliation
+  - [~] 17.7 Write property tests for payment reconciliation
     - **Property 26: Payment Reconciliation**
     - **Property 27: Partial Payment Recording**
     - **Validates: Requirements 12.1, 12.4**
   
-  - [ ] 17.8 Implement sync error handling and retry
+  - [~] 17.8 Implement sync error handling and retry
     - Log sync errors to database
     - Implement exponential backoff retry
     - Create admin UI for viewing and retrying errors
     - _Requirements: 10.3, 11.6, 12.3, 12.6, 19.2, 19.3_
 
-- [ ] 18. Checkpoint - Payments and Xero integration
+- [~] 18. Checkpoint - Payments and Xero integration
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 19. Teacher portal
-  - [ ] 19.1 Implement teacher dashboard
+- [~] 19. Teacher portal
+  - [~] 19.1 Implement teacher dashboard
     - Create endpoint to list teacher's classes for current week
     - Display class information (time, location, level)
     - _Requirements: 7.1, 7.2_
   
-  - [ ] 19.2 Implement class roll viewing
+  - [~] 19.2 Implement class roll viewing
     - Create endpoint to get enrolled students for a class
     - Apply access policy for sensitive information
     - Enforce teacher can only view assigned classes
     - _Requirements: 7.3, 7.4, 7.7_
   
-  - [ ] 19.3 Write property test for teacher class access
+  - [~] 19.3 Write property test for teacher class access
     - **Property 6: Teacher Class Visibility**
     - **Property 7: Teacher Access Restrictions**
     - **Validates: Requirements 2.3, 7.7**
   
-  - [ ] 19.4 Implement attendance marking
+  - [~] 19.4 Implement attendance marking
     - Create attendance marking endpoint
     - Record present/absent status with timestamp
     - Support private notes
     - _Requirements: 17.1, 17.2, 17.3_
   
-  - [ ] 19.5 Write property test for attendance records
+  - [~] 19.5 Write property test for attendance records
     - **Property 33: Attendance Record Persistence**
     - **Validates: Requirements 17.2**
   
-  - [ ] 19.6 Implement class roll export
+  - [~] 19.6 Implement class roll export
     - Create CSV export endpoint
     - Include student names and relevant information
     - _Requirements: 7.6_
 
-- [ ] 20. Admin portal - class management
-  - [ ] 20.1 Implement admin class CRUD UI endpoints
+- [~] 20. Admin portal - class management
+  - [~] 20.1 Implement admin class CRUD UI endpoints
     - Create endpoints for class creation form
     - Implement class update and delete
     - Validate all required fields
     - _Requirements: 8.1, 8.2, 8.3_
   
-  - [ ] 20.2 Implement admin enrolment management
+  - [~] 20.2 Implement admin enrolment management
     - Create endpoints to view all enrolments
     - Implement move enrolment between classes
     - Implement cancel enrolment with refund calculation
     - _Requirements: 9.1, 9.2, 9.5_
   
-  - [ ] 20.3 Implement substitute teacher assignment
+  - [~] 20.3 Implement substitute teacher assignment
     - Create endpoint to assign substitute for specific date
     - Notify enrolled customers of change
     - _Requirements: 24.3_
 
-- [ ] 21. Admin portal - configuration
-  - [ ] 21.1 Implement pricing rule configuration UI
+- [~] 21. Admin portal - configuration
+  - [~] 21.1 Implement pricing rule configuration UI
     - Create endpoints for pricing rule CRUD
     - Support per-class, tiered, and term-based rules
     - _Requirements: 22.1, 22.2_
   
-  - [ ] 21.2 Implement discount rule configuration
+  - [~] 21.2 Implement discount rule configuration
     - Create endpoints for discount rule CRUD
     - Support all discount types
     - _Requirements: 22.3_
   
-  - [ ] 21.3 Implement Xero configuration UI
+  - [~] 21.3 Implement Xero configuration UI
     - Create endpoints for Xero settings
     - Test connection endpoint
     - Display sync status
     - _Requirements: 22.4, 30.1_
   
-  - [ ] 21.4 Implement notification template management
+  - [~] 21.4 Implement notification template management
     - Create endpoints for template CRUD
     - Support variable substitution
     - Validate template syntax
     - _Requirements: 23.1, 23.2, 23.3, 23.4_
 
-- [ ] 22. Notification service
-  - [ ] 22.1 Set up email service integration
+- [~] 22. Notification service
+  - [~] 22.1 Set up email service integration
     - Integrate SendGrid or AWS SES
     - Create email sending service
     - _Requirements: 14.1_
   
-  - [ ] 22.2 Implement notification templates
+  - [~] 22.2 Implement notification templates
     - Create default templates for all notification types
     - Implement variable substitution
     - _Requirements: 23.4_
   
-  - [ ] 22.3 Implement automated notifications
+  - [~] 22.3 Implement automated notifications
     - Send payment confirmation emails
     - Send payment reminder emails (configurable)
     - Send overdue notifications
@@ -502,33 +502,33 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Log all notifications
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
   
-  - [ ] 22.4 Implement background job queue
+  - [~] 22.4 Implement background job queue
     - Set up Bull queue with Redis
     - Create job processors for notifications and Xero sync
     - Implement retry logic
     - _Requirements: 12.5, 19.2_
 
-- [ ] 23. Checkpoint - Teacher portal and notifications
+- [~] 23. Checkpoint - Teacher portal and notifications
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 24. Reporting service
-  - [ ] 24.1 Implement enrolment reports
+- [~] 24. Reporting service
+  - [~] 24.1 Implement enrolment reports
     - Create endpoint for active enrolments by class
     - Create endpoint for new enrolments this month
     - _Requirements: 13.1, 13.5_
   
-  - [ ] 24.2 Implement capacity reports
+  - [~] 24.2 Implement capacity reports
     - Create endpoint for capacity utilization by class
     - Calculate percentage filled
     - _Requirements: 13.2_
   
-  - [ ] 24.3 Implement revenue reports
+  - [~] 24.3 Implement revenue reports
     - Create endpoint for revenue by month
     - Aggregate payment data
     - _Requirements: 13.3_
   
-  - [ ] 24.4 Implement outstanding payments report
+  - [~] 24.4 Implement outstanding payments report
     - Create endpoint for overdue invoices
     - Include customer details
     - _Requirements: 13.4_
@@ -538,7 +538,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Calculate churn rate
     - _Requirements: 13.6_
   
-  - [ ] 24.6 Implement report export
+  - [~] 24.6 Implement report export
     - Create CSV export functionality
     - Support all report types
     - _Requirements: 13.7_
@@ -548,47 +548,47 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Group by class or student
     - _Requirements: 17.4_
 
-- [ ] 25. Multi-location support
-  - [ ] 25.1 Implement location management
+- [~] 25. Multi-location support
+  - [~] 25.1 Implement location management
     - Create location CRUD endpoints
     - Store name, address, contact details
     - _Requirements: 28.1_
   
-  - [ ] 25.2 Implement location-specific features
+  - [~] 25.2 Implement location-specific features
     - Require location assignment for classes
     - Filter timetable by location
     - Support location-specific pricing rules
     - Apply location tracking in Xero
     - _Requirements: 28.2, 28.3, 28.4, 28.5_
   
-  - [ ] 25.3 Write property test for location filtering
+  - [~] 25.3 Write property test for location filtering
     - **Property 46: Location Filtering**
     - **Validates: Requirements 28.3**
 
-- [ ] 26. Merchandise and uniform sales
-  - [ ] 26.1 Implement merchandise management
+- [~] 26. Merchandise and uniform sales
+  - [~] 26.1 Implement merchandise management
     - Create merchandise item CRUD endpoints
     - Track inventory levels
     - _Requirements: 27.1, 27.5_
   
-  - [ ] 26.2 Write property test for inventory constraints
+  - [~] 26.2 Write property test for inventory constraints
     - **Property 45: Inventory Constraint**
     - **Validates: Requirements 27.5**
   
-  - [ ] 26.3 Implement merchandise purchase flow
+  - [~] 26.3 Implement merchandise purchase flow
     - Add merchandise to enrolment checkout
     - Create standalone shop endpoint
     - Include in invoice line items
     - Sync to Xero
     - _Requirements: 27.1, 27.2, 27.3, 27.4_
 
-- [ ] 27. Term-based enrolment
-  - [ ] 27.1 Implement term configuration
+- [~] 27. Term-based enrolment
+  - [~] 27.1 Implement term configuration
     - Create term definition endpoints
     - Configure term dates and pricing
     - _Requirements: 8.7, 29.1_
   
-  - [ ] 27.2 Implement term-based enrolment flow
+  - [~] 27.2 Implement term-based enrolment flow
     - Display monthly and term pricing options
     - Calculate term fees
     - Create term invoices
@@ -596,13 +596,13 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Prevent mid-term cancellations (configurable)
     - _Requirements: 29.1, 29.2, 29.3, 29.4, 29.5_
 
-- [ ] 28. Cancellation and refund policies
-  - [ ] 28.1 Implement policy configuration
+- [~] 28. Cancellation and refund policies
+  - [~] 28.1 Implement policy configuration
     - Create endpoints for cancellation policy settings
     - Configure notice periods and refund percentages
     - _Requirements: 26.1_
   
-  - [ ] 28.2 Implement refund calculation
+  - [~] 28.2 Implement refund calculation
     - Calculate refunds based on policy and effective date
     - Apply to cancellation flow
     - _Requirements: 26.2_
@@ -612,23 +612,23 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Track credit usage
     - _Requirements: 26.4_
   
-  - [ ] 28.4 Display cancellation policy
+  - [~] 28.4 Display cancellation policy
     - Show policy to customers before enrolment
     - _Requirements: 26.5_
 
-- [ ] 29. Checkpoint - Advanced features
+- [~] 29. Checkpoint - Advanced features
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 30. Frontend - Public website
-  - [ ] 30.1 Set up React frontend project
+- [~] 30. Frontend - Public website
+  - [~] 30.1 Set up React frontend project
     - Initialize React with TypeScript
     - Set up React Router
     - Configure Tailwind CSS
     - Set up API client with axios
     - _Requirements: Foundation for UI requirements_
   
-  - [ ] 30.2 Implement public pages
+  - [~] 30.2 Implement public pages
     - Create home page
     - Create about/teachers page
     - Create timetable page with filters
@@ -636,104 +636,104 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Create contact page
     - _Requirements: 3.1, 3.2, 3.3_
   
-  - [ ] 30.3 Implement registration flow
+  - [~] 30.3 Implement registration flow
     - Create registration form
     - Validate inputs client-side
     - Handle registration errors
     - _Requirements: 1.1_
 
-- [ ] 31. Frontend - Customer portal
-  - [ ] 31.1 Implement customer dashboard
+- [~] 31. Frontend - Customer portal
+  - [~] 31.1 Implement customer dashboard
     - Display enrolments
     - Show next classes
     - Display payment status
     - _Requirements: 4.1, 6.7_
   
-  - [ ] 31.2 Implement dancer profile management
+  - [~] 31.2 Implement dancer profile management
     - Create dancer profile forms
     - Handle profile updates
     - _Requirements: 1.3, 1.4, 1.5, 1.6_
   
-  - [ ] 31.3 Implement enrolment flow
+  - [~] 31.3 Implement enrolment flow
     - Create class selection interface
     - Display fee breakdown
     - Show discount explanations
     - Support multi-dancer enrolment
     - _Requirements: 4.1, 4.2, 4.3, 25.1, 25.2, 25.3_
   
-  - [ ] 31.4 Implement payment checkout
+  - [~] 31.4 Implement payment checkout
     - Integrate Stripe Elements
     - Display fee breakdown
     - Handle payment success/failure
     - _Requirements: 6.1, 6.2, 6.5_
   
-  - [ ] 31.5 Implement billing section
+  - [~] 31.5 Implement billing section
     - Display invoices
     - Show receipts
     - Download PDFs
     - _Requirements: 6.4_
 
-- [ ] 32. Frontend - Teacher portal
-  - [ ] 32.1 Implement teacher dashboard
+- [~] 32. Frontend - Teacher portal
+  - [~] 32.1 Implement teacher dashboard
     - Display classes for current week
     - Quick access to class rolls
     - _Requirements: 7.1_
   
-  - [ ] 32.2 Implement class roll view
+  - [~] 32.2 Implement class roll view
     - Display enrolled students
     - Show class information
     - Export to CSV
     - _Requirements: 7.2, 7.3, 7.6_
   
-  - [ ] 32.3 Implement attendance marking
+  - [~] 32.3 Implement attendance marking
     - Create attendance marking interface
     - Support notes
     - _Requirements: 17.1, 17.2, 17.3_
 
-- [ ] 33. Frontend - Admin portal
-  - [ ] 33.1 Implement admin dashboard
+- [~] 33. Frontend - Admin portal
+  - [~] 33.1 Implement admin dashboard
     - Display key metrics
     - Show Xero sync status
     - Display recent activity
     - _Requirements: 30.1, 30.2_
   
-  - [ ] 33.2 Implement class management UI
+  - [~] 33.2 Implement class management UI
     - Create class CRUD forms
     - Display scheduling conflicts
     - Manage teacher assignments
     - _Requirements: 8.1, 8.2, 8.3, 24.1, 24.2_
   
-  - [ ] 33.3 Implement enrolment management UI
+  - [~] 33.3 Implement enrolment management UI
     - Display all enrolments
     - Move students between classes
     - Cancel enrolments with refunds
     - _Requirements: 9.1, 9.2, 9.5_
   
-  - [ ] 33.4 Implement configuration UI
+  - [~] 33.4 Implement configuration UI
     - Pricing rules management
     - Discount rules management
     - Xero settings
     - Notification templates
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 23.1, 23.2_
   
-  - [ ] 33.5 Implement reporting UI
+  - [~] 33.5 Implement reporting UI
     - Display all report types
     - Export to CSV
     - Filter and date range selection
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
   
-  - [ ] 33.6 Implement Xero sync management UI
+  - [~] 33.6 Implement Xero sync management UI
     - Display sync errors
     - Retry failed syncs
     - View sync history
     - _Requirements: 10.3, 11.6, 12.3, 30.2_
 
-- [ ] 34. Checkpoint - Frontend complete
+- [~] 34. Checkpoint - Frontend complete
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 35. Accessibility and mobile responsiveness
-  - [ ] 35.1 Implement accessibility features
+- [~] 35. Accessibility and mobile responsiveness
+  - [~] 35.1 Implement accessibility features
     - Add ARIA labels to interactive elements
     - Ensure keyboard navigation works
     - Implement visible focus indicators
@@ -742,32 +742,32 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Associate form labels properly
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6_
   
-  - [ ] 35.2 Implement mobile responsiveness
+  - [~] 35.2 Implement mobile responsiveness
     - Create responsive layouts for all pages
     - Ensure touch targets are 44x44 pixels minimum
     - Optimize timetable for mobile
     - Optimize checkout for mobile
     - _Requirements: 21.1, 21.2, 21.3, 21.4_
   
-  - [ ] 35.3 Test accessibility compliance
+  - [~] 35.3 Test accessibility compliance
     - Run automated accessibility tests
     - Test with screen readers
     - Test keyboard-only navigation
     - _Requirements: 20.1_
 
-- [ ] 36. Security hardening
-  - [ ] 36.1 Implement security headers
+- [~] 36. Security hardening
+  - [~] 36.1 Implement security headers
     - Add HSTS headers
     - Configure CORS properly
     - Add CSP headers
     - _Requirements: 18.2_
   
-  - [ ] 36.2 Implement rate limiting
+  - [~] 36.2 Implement rate limiting
     - Add rate limiting middleware
     - Configure limits per endpoint type
     - _Requirements: Security best practices_
   
-  - [ ] 36.3 Implement input validation and sanitization
+  - [~] 36.3 Implement input validation and sanitization
     - Validate all inputs server-side
     - Sanitize user-generated content
     - Use parameterized queries (already done with Prisma)
