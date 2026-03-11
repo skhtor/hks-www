@@ -122,7 +122,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Validate required fields (name, style, level, time, location, capacity, teacher)
     - _Requirements: 8.1, 8.2, 8.3_
   
-  - [~] 7.2 Write property test for class updates
+  - [x] 7.2 Write property test for class updates
     - **Property 8: Class Display Completeness**
     - **Validates: Requirements 3.3, 8.3**
   
