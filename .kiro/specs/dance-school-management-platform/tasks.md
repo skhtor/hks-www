@@ -141,7 +141,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Prevent deletion of classes with active enrolments
     - _Requirements: 8.4_
 
-- [~] 8. Timetable service
+- [ ] 8. Timetable service
   - [x] 8.1 Implement timetable query endpoint
     - Create endpoint to list all active classes
     - Support week grid and list view formats
@@ -158,12 +158,12 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 46: Location Filtering**
     - **Validates: Requirements 3.2, 28.3**
   
-  - [ ] 8.3 Implement capacity display
+  - [x] 8.4 Implement capacity display
     - Calculate and display remaining capacity
     - Show "full" indicator when at capacity
     - _Requirements: 3.3, 3.4_
 
-- [~] 9. Fee engine
+- [ ] 9. Fee engine
   - [x] 9.1 Implement pricing rule management
     - Create pricing rule CRUD endpoints
     - Support per-class, tiered bundle, and term-based pricing
@@ -182,7 +182,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle one-time fees
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.7, 5.8_
   
-  - [~] 9.4 Write property tests for fee calculations
+  - [ ] 9.4 Write property tests for fee calculations
     - **Property 10: Fee Calculation Determinism**
     - **Property 15: Per-Class Pricing Calculation**
     - **Property 16: Tiered Bundle Pricing**
@@ -190,114 +190,114 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 19: GST Calculation**
     - **Validates: Requirements 4.2, 5.1, 5.2, 5.3, 5.7**
   
-  - [~] 9.5 Implement proration calculation
+  - [ ] 9.5 Implement proration calculation
     - Calculate prorated fees for mid-cycle starts
     - Support configurable billing cycles
     - _Requirements: 5.6_
   
-  - [~] 9.6 Write property test for proration
+  - [ ] 9.6 Write property test for proration
     - **Property 18: Proration Calculation**
     - **Validates: Requirements 5.6**
   
-  - [~] 9.7 Implement configuration immediate effect
+  - [ ] 9.7 Implement configuration immediate effect
     - Ensure pricing rule changes apply immediately
     - Invalidate relevant caches on update
     - _Requirements: 22.6_
   
-  - [~] 9.8 Write property test for configuration updates
+  - [ ] 9.8 Write property test for configuration updates
     - **Property 40: Configuration Immediate Effect**
     - **Validates: Requirements 22.6**
 
-- [~] 10. Checkpoint - Classes and fee engine
+- [ ] 10. Checkpoint - Classes and fee engine
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [~] 11. Enrolment service
-  - [~] 11.1 Implement enrolment creation with capacity enforcement
+- [ ] 11. Enrolment service
+  - [ ] 11.1 Implement enrolment creation with capacity enforcement
     - Create enrolment endpoint with capacity checking
     - Implement pessimistic locking to prevent race conditions
     - Update class enrolled count atomically
     - _Requirements: 4.1, 4.4, 4.7, 19.5_
   
-  - [~] 11.2 Write property tests for capacity enforcement
+  - [ ] 11.2 Write property tests for capacity enforcement
     - **Property 12: Capacity Enforcement**
     - **Property 13: Enrolment Count Invariant**
     - **Property 37: Concurrent Capacity Enforcement**
     - **Validates: Requirements 4.4, 4.7, 8.6, 19.5**
   
-  - [~] 11.3 Implement bulk enrolment for families
+  - [ ] 11.3 Implement bulk enrolment for families
     - Create bulk enrolment endpoint
     - Ensure atomic transaction (all or nothing)
     - Calculate family discounts
     - _Requirements: 4.1, 25.1, 25.4_
   
-  - [~] 11.4 Write property test for bulk enrolment atomicity
+  - [ ] 11.4 Write property test for bulk enrolment atomicity
     - **Property 43: Bulk Enrolment Atomicity**
     - **Validates: Requirements 25.4**
   
-  - [~] 11.5 Implement enrolment cancellation
+  - [ ] 11.5 Implement enrolment cancellation
     - Create cancellation endpoint with effective date
     - Apply refund policy calculations
     - Update class capacity
     - Create audit log entry
     - _Requirements: 9.2, 9.3, 9.6, 26.2_
   
-  - [~] 11.6 Write property tests for cancellation
+  - [ ] 11.6 Write property tests for cancellation
     - **Property 14: Capacity Adjustment on Move**
     - **Property 44: Refund Calculation**
     - **Validates: Requirements 9.1, 26.2**
   
-  - [~] 11.7 Implement enrolment move between classes
+  - [ ] 11.7 Implement enrolment move between classes
     - Create move endpoint
     - Update both class capacities atomically
     - _Requirements: 9.1_
   
-  - [~] 11.8 Write property test for audit logging
+  - [ ] 11.8 Write property test for audit logging
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.6**
 
-- [~] 12. Waitlist service
-  - [~] 12.1 Implement waitlist management
+- [ ] 12. Waitlist service
+  - [ ] 12.1 Implement waitlist management
     - Create join waitlist endpoint
     - Assign sequential positions
     - Record timestamps
     - _Requirements: 15.1, 15.2_
   
-  - [~] 12.2 Write property test for waitlist ordering
+  - [ ] 12.2 Write property test for waitlist ordering
     - **Property 28: Waitlist Ordering**
     - **Validates: Requirements 15.2**
   
-  - [~] 12.3 Implement waitlist offer processing
+  - [ ] 12.3 Implement waitlist offer processing
     - Offer spot to next customer when available
     - Generate timed acceptance links
     - Handle offer expiry and progression
     - _Requirements: 15.3, 15.4, 15.5_
   
-  - [~] 12.4 Write property tests for waitlist queue
+  - [ ] 12.4 Write property tests for waitlist queue
     - **Property 29: Waitlist Queue Processing**
     - **Property 30: Waitlist Progression**
     - **Validates: Requirements 15.3, 15.5**
 
-- [~] 13. Trial booking service
-  - [~] 13.1 Implement trial booking
+- [ ] 13. Trial booking service
+  - [ ] 13.1 Implement trial booking
     - Create trial booking endpoint
     - Apply trial pricing rules
     - Create single-session enrolment with isTrial flag
     - Enforce trial limits per dancer/class
     - _Requirements: 16.1, 16.2, 16.5_
   
-  - [~] 13.2 Write property tests for trial bookings
+  - [ ] 13.2 Write property tests for trial bookings
     - **Property 31: Trial Enrolment Creation**
     - **Property 32: Trial Booking Limits**
     - **Validates: Requirements 16.2, 16.5**
   
-  - [~] 13.3 Implement trial conversion
+  - [ ] 13.3 Implement trial conversion
     - Create conversion endpoint
     - Update enrolment status from trial to active
     - Track conversion metrics
     - _Requirements: 16.3, 16.4_
 
-- [~] 14. Checkpoint - Enrolment and waitlist
+- [ ] 14. Checkpoint - Enrolment and waitlist
   - Ensure all tests pass, ask the user if questions arise.
 
 
