@@ -115,7 +115,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [~] 7. Class service
+- [x] 7. Class service
   - [x] 7.1 Implement class CRUD operations
     - Create class creation endpoint with validation
     - Implement class update and delete endpoints
@@ -137,7 +137,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 42: Teacher Scheduling Conflicts**
     - **Validates: Requirements 24.1, 24.2**
   
-  - [~] 7.5 Implement class deletion protection
+  - [x] 7.5 Implement class deletion protection
     - Prevent deletion of classes with active enrolments
     - _Requirements: 8.4_
 
