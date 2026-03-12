@@ -55,6 +55,34 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/terms/pricing/:classId
+ * Get both monthly and term pricing options for a class.
+ * Requirements: 29.1, 29.2
+ */
+router.get('/pricing/:classId', async (req: Request, res: Response) => {
+  try {
+    const options = await termService.getTermPricingOptions(req.params.classId);
+    res.json({ success: true, data: options });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * POST /api/terms/:id/notify-end
+ * Send term-end notifications to all enrolled customers (admin only).
+ * Requirements: 29.4
+ */
+router.post('/:id/notify-end', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const result = await termService.sendTermEndNotifications(req.params.id);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
  * GET /api/terms/current
  * Get the currently active term.
  * Requirements: 8.7, 29.1
@@ -131,7 +159,7 @@ function handleError(error: unknown, res: Response): void {
   }
 
   if (error instanceof Error) {
-    if (error.message === 'Term not found') {
+    if (error.message === 'Term not found' || error.message === 'Class not found') {
       res.status(404).json({
         success: false,
         error: { code: 'NOT_FOUND', message: error.message },

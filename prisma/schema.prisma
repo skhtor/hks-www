@@ -173,24 +173,28 @@ enum DayOfWeek {
 
 // Enrolment Management
 model Enrolment {
-  id        String           @id @default(uuid())
-  dancerId  String
-  classId   String
-  status    EnrolmentStatus
-  startDate DateTime
-  endDate   DateTime?
-  isTrial   Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id          String           @id @default(uuid())
+  dancerId    String
+  classId     String
+  status      EnrolmentStatus
+  startDate   DateTime
+  endDate     DateTime?
+  isTrial     Boolean          @default(false)
+  billingType BillingType      @default(MONTHLY)
+  termId      String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   dancer            Dancer             @relation(fields: [dancerId], references: [id])
   class             Class              @relation(fields: [classId], references: [id])
+  term              Term?              @relation(fields: [termId], references: [id])
   attendanceRecords AttendanceRecord[]
 
   @@index([dancerId])
   @@index([classId])
   @@index([status])
   @@index([classId, status])
+  @@index([termId])
   @@map("enrolment")
 }
 
@@ -199,6 +203,11 @@ enum EnrolmentStatus {
   CANCELLED
   COMPLETED
   TRIAL
+}
+
+enum BillingType {
+  MONTHLY
+  TERM
 }
 
 // Pricing and Discounts
@@ -489,6 +498,8 @@ model Term {
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  enrolments Enrolment[]
 
   @@index([isActive])
   @@index([startDate, endDate])

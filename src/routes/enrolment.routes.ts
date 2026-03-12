@@ -2,13 +2,14 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { enrolmentService } from '../services/enrolment.service';
 import { authenticate, authorize } from '../middleware/auth.middleware';
-import { UserRole, EnrolmentStatus } from '@prisma/client';
+import { UserRole, EnrolmentStatus, BillingType } from '@prisma/client';
 
 const router = Router();
 
 router.use(authenticate);
 
 const enrolmentStatusValues = Object.values(EnrolmentStatus) as [string, ...string[]];
+const billingTypeValues = Object.values(BillingType) as [BillingType, ...BillingType[]];
 
 const createEnrolmentSchema = z.object({
   dancerId: z.string().min(1, 'Dancer ID is required'),
@@ -16,6 +17,8 @@ const createEnrolmentSchema = z.object({
   startDate: z.string().datetime().transform((v) => new Date(v)),
   isTrial: z.boolean().optional(),
   status: z.enum(enrolmentStatusValues as [EnrolmentStatus, ...EnrolmentStatus[]]).optional(),
+  billingType: z.enum(billingTypeValues).optional(),
+  termId: z.string().optional(),
 });
 
 const cancelEnrolmentSchema = z.object({
@@ -51,10 +54,34 @@ router.post('/bulk', authorize(UserRole.ADMIN), async (req: Request, res: Respon
   }
 });
 
+const termEnrolmentSchema = z.object({
+  dancerId: z.string().min(1, 'Dancer ID is required'),
+  classId: z.string().min(1, 'Class ID is required'),
+  termId: z.string().min(1, 'Term ID is required'),
+  startDate: z.string().datetime().transform((v) => new Date(v)),
+  customerId: z.string().min(1, 'Customer ID is required'),
+  householdId: z.string().min(1, 'Household ID is required'),
+});
+
+/**
+ * POST /api/enrolments/term
+ * Create a term-based enrolment and generate a term invoice.
+ * Requirements: 29.2, 29.3
+ */
+router.post('/term', async (req: Request, res: Response) => {
+  try {
+    const data = termEnrolmentSchema.parse(req.body);
+    const result = await enrolmentService.createTermEnrolment(data);
+    res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
 /**
  * POST /api/enrolments
- * Create an enrolment (authenticated).
- * Requirements: 4.1, 4.4, 4.7, 19.5
+ * Create an enrolment (authenticated). Supports billingType and termId for term-based enrolments.
+ * Requirements: 4.1, 4.4, 4.7, 19.5, 29.2
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
@@ -123,14 +150,15 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 /**
  * POST /api/enrolments/:id/cancel
- * Cancel an enrolment (admin only).
- * Requirements: 9.2, 9.6
+ * Cancel an enrolment (admin only). Supports adminOverride to bypass mid-term cancellation policy.
+ * Requirements: 9.2, 9.6, 29.5
  */
 router.post('/:id/cancel', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
   try {
     const { effectiveDate } = cancelEnrolmentSchema.parse(req.body);
+    const adminOverride = req.body.adminOverride === true;
     const adminUserId = req.user!.userId;
-    const enrolment = await enrolmentService.cancelEnrolment(req.params.id, effectiveDate, adminUserId);
+    const enrolment = await enrolmentService.cancelEnrolment(req.params.id, effectiveDate, adminUserId, adminOverride);
     res.json({ success: true, data: enrolment });
   } catch (error) {
     handleError(error, res);
@@ -196,6 +224,25 @@ function handleError(error: unknown, res: Response): void {
       res.status(409).json({
         success: false,
         error: { code: 'CONFLICT', message: error.message },
+      });
+      return;
+    }
+
+    if (error.message.includes('Mid-term cancellations are not allowed')) {
+      res.status(403).json({
+        success: false,
+        error: { code: 'MID_TERM_CANCELLATION_BLOCKED', message: error.message },
+      });
+      return;
+    }
+
+    if (
+      error.message === 'termId is required for TERM billing type' ||
+      error.message === 'Term not found'
+    ) {
+      res.status(400).json({
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: error.message },
       });
       return;
     }

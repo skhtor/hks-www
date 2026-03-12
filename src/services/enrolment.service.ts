@@ -1,6 +1,15 @@
-import { PrismaClient, EnrolmentStatus } from '@prisma/client';
+import { PrismaClient, EnrolmentStatus, BillingType } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+/**
+ * When set to 'true', mid-term cancellations are blocked unless admin overrides.
+ * Configurable via ALLOW_MID_TERM_CANCELLATION env var.
+ * Requirements: 29.5
+ */
+export function isMidTermCancellationAllowed(): boolean {
+  return process.env.ALLOW_MID_TERM_CANCELLATION === 'true';
+}
 
 export interface CreateEnrolmentInput {
   dancerId: string;
@@ -8,16 +17,18 @@ export interface CreateEnrolmentInput {
   startDate: Date;
   isTrial?: boolean;
   status?: EnrolmentStatus;
+  billingType?: BillingType;
+  termId?: string;
 }
 
 export class EnrolmentService {
   /**
    * Creates a new enrolment with capacity enforcement.
    * Uses a transaction to atomically check capacity and create the enrolment.
-   * Requirements: 4.1, 4.4, 4.7, 19.5
+   * Requirements: 4.1, 4.4, 4.7, 19.5, 29.2, 29.3
    */
   async createEnrolment(data: CreateEnrolmentInput) {
-    const { dancerId, classId, startDate, isTrial = false, status } = data;
+    const { dancerId, classId, startDate, isTrial = false, status, billingType, termId } = data;
 
     // Validate dancer exists
     const dancer = await prisma.dancer.findUnique({ where: { id: dancerId } });
@@ -29,6 +40,17 @@ export class EnrolmentService {
     const classRecord = await prisma.class.findUnique({ where: { id: classId } });
     if (!classRecord) {
       throw new Error('Class not found');
+    }
+
+    // Validate term if billing type is TERM
+    if (billingType === BillingType.TERM) {
+      if (!termId) {
+        throw new Error('termId is required for TERM billing type');
+      }
+      const term = await prisma.term.findUnique({ where: { id: termId } });
+      if (!term) {
+        throw new Error('Term not found');
+      }
     }
 
     return prisma.$transaction(async (tx) => {
@@ -68,6 +90,8 @@ export class EnrolmentService {
           startDate,
           isTrial,
           status: enrolmentStatus,
+          billingType: billingType ?? BillingType.MONTHLY,
+          ...(termId ? { termId } : {}),
         },
         include: {
           dancer: true,
@@ -128,12 +152,33 @@ export class EnrolmentService {
 
   /**
    * Cancels an enrolment, decrements class count, and creates an audit log.
-   * Requirements: 9.2, 9.6
+   * Prevents mid-term cancellations when policy is configured to disallow them,
+   * unless adminOverride is set to true.
+   * Requirements: 9.2, 9.6, 29.5
    */
-  async cancelEnrolment(id: string, effectiveDate: Date, adminUserId: string) {
+  async cancelEnrolment(id: string, effectiveDate: Date, adminUserId: string, adminOverride = false) {
     const enrolment = await prisma.enrolment.findUnique({ where: { id } });
     if (!enrolment) {
       throw new Error('Enrolment not found');
+    }
+
+    // Mid-term cancellation guard (Requirement 29.5)
+    if (
+      enrolment.billingType === BillingType.TERM &&
+      enrolment.termId &&
+      !isMidTermCancellationAllowed() &&
+      !adminOverride
+    ) {
+      const term = await prisma.term.findUnique({ where: { id: enrolment.termId } });
+      if (term) {
+        const now = new Date();
+        // Block if we're currently within the term
+        if (now >= term.startDate && now <= term.endDate) {
+          throw new Error(
+            'Mid-term cancellations are not allowed. Use adminOverride to bypass this policy.'
+          );
+        }
+      }
     }
 
     const wasCountable =
@@ -172,6 +217,7 @@ export class EnrolmentService {
           changes: {
             previousStatus: enrolment.status,
             effectiveDate: effectiveDate.toISOString(),
+            adminOverride,
           },
         },
       });
@@ -327,6 +373,71 @@ export class EnrolmentService {
 
       return enrolments;
     });
+  }
+
+  /**
+   * Creates a term-based enrolment and generates a term invoice for the full term amount.
+   * Requirements: 29.2, 29.3
+   */
+  async createTermEnrolment(params: {
+    dancerId: string;
+    classId: string;
+    termId: string;
+    startDate: Date;
+    customerId: string;
+    householdId: string;
+  }) {
+    const { dancerId, classId, termId, startDate, customerId, householdId } = params;
+
+    // Create the enrolment with TERM billing type
+    const enrolment = await this.createEnrolment({
+      dancerId,
+      classId,
+      startDate,
+      billingType: BillingType.TERM,
+      termId,
+    });
+
+    // Calculate term fee and generate invoice
+    const { termService } = await import('./term.service');
+    const termFee = await termService.calculateTermFee(classId, termId);
+    const term = await prisma.term.findUnique({ where: { id: termId } });
+    if (!term) throw new Error('Term not found');
+
+    const gstAmount = Math.round(termFee * 0.1 * 100) / 100;
+    const total = Math.round((termFee + gstAmount) * 100) / 100;
+
+    const { invoiceService } = await import('./invoice.service');
+    const idempotencyKey = `term-enrolment-${enrolment.id}-${termId}`;
+    const invoice = await invoiceService.generateInvoice({
+      customerId,
+      householdId,
+      feeResult: {
+        pricingRule: null,
+        appliedDiscounts: [],
+        subtotal: termFee,
+        discountAmount: 0,
+        oneTimeFee: 0,
+        gstAmount,
+        total,
+        lineItems: [
+          {
+            description: `Term enrolment: ${term.name}`,
+            amount: termFee,
+            type: 'base_fee',
+          },
+          {
+            description: 'GST (10%)',
+            amount: gstAmount,
+            type: 'gst',
+          },
+        ],
+      },
+      dueDate: term.startDate,
+      idempotencyKey,
+    });
+
+    return { enrolment, invoice };
   }
 
   /**
