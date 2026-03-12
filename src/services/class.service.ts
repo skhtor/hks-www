@@ -434,6 +434,48 @@ export class ClassService {
   }
 
   /**
+   * Gets a summary of all classes for the admin UI.
+   * Includes enrolment counts and computed status (active/full/ended).
+   * Requirements: 8.1, 8.2, 8.3
+   */
+  async getAdminClassSummary() {
+    const now = new Date();
+
+    const classes = await prisma.class.findMany({
+      include: {
+        teacher: { select: { id: true, name: true } },
+        location: { select: { id: true, name: true } },
+      },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    });
+
+    return classes.map((cls) => {
+      let status: 'active' | 'full' | 'ended';
+      if (cls.endDate && cls.endDate <= now) {
+        status = 'ended';
+      } else if (cls.enrolledCount >= cls.capacity) {
+        status = 'full';
+      } else {
+        status = 'active';
+      }
+
+      return {
+        id: cls.id,
+        name: cls.name,
+        style: cls.style,
+        level: cls.level,
+        dayOfWeek: cls.dayOfWeek,
+        startTime: cls.startTime,
+        locationName: cls.location.name,
+        teacherName: cls.teacher.name,
+        capacity: cls.capacity,
+        enrolledCount: cls.enrolledCount,
+        status,
+      };
+    });
+  }
+
+  /**
    * Gets all classes assigned to a specific teacher.
    * Requirements: 2.3, 7.1 - Teacher sees only their assigned classes
    */

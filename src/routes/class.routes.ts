@@ -95,6 +95,20 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/classes/admin/summary
+ * Get all classes with enrolment counts for the admin UI (admin only).
+ * Requirements: 8.1, 8.2, 8.3
+ */
+router.get('/admin/summary', authorize(UserRole.ADMIN), async (_req: Request, res: Response) => {
+  try {
+    const summary = await classService.getAdminClassSummary();
+    res.json({ success: true, data: summary });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
  * GET /api/classes/teacher/:teacherId
  * Get classes for a specific teacher.
  * Requirements: 2.3, 7.1
