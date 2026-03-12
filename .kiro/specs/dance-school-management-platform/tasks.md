@@ -366,7 +366,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Store and refresh access tokens securely
     - _Requirements: 10.5, 18.4_
   
-  - [-] 17.2 Implement contact synchronization
+  - [x] 17.2 Implement contact synchronization
     - Create or match Xero contacts by email
     - Sync customer profile updates
     - Use idempotency to prevent duplicates
