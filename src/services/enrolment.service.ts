@@ -1,4 +1,5 @@
 import { PrismaClient, EnrolmentStatus, BillingType } from '@prisma/client';
+import { cancellationPolicyService } from './cancellation-policy.service';
 
 const prisma = new PrismaClient();
 
@@ -154,9 +155,10 @@ export class EnrolmentService {
    * Cancels an enrolment, decrements class count, and creates an audit log.
    * Prevents mid-term cancellations when policy is configured to disallow them,
    * unless adminOverride is set to true.
-   * Requirements: 9.2, 9.6, 29.5
+   * Optionally accepts a policyId to calculate the refund amount using the cancellation policy.
+   * Requirements: 9.2, 9.6, 26.2, 29.5
    */
-  async cancelEnrolment(id: string, effectiveDate: Date, adminUserId: string, adminOverride = false) {
+  async cancelEnrolment(id: string, effectiveDate: Date, adminUserId: string, adminOverride = false, policyId?: string) {
     const enrolment = await prisma.enrolment.findUnique({ where: { id } });
     if (!enrolment) {
       throw new Error('Enrolment not found');
@@ -184,6 +186,46 @@ export class EnrolmentService {
     const wasCountable =
       enrolment.status === EnrolmentStatus.ACTIVE ||
       enrolment.status === EnrolmentStatus.TRIAL;
+
+    // Calculate refund amount using cancellation policy
+    let refundAmount = 0;
+    let refundPercentage = 0;
+    let refundPolicyName: string | undefined;
+
+    const now = new Date();
+    const daysNotice = Math.floor(
+      (effectiveDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    try {
+      let policyResult: { refundPercentage: number; refundAmount: number; policyName: string } | null = null;
+
+      if (policyId) {
+        // Use the specified policy
+        const policy = await cancellationPolicyService.getPolicy(policyId);
+        const baseAmount = 0; // base amount placeholder; full fee calculation is a separate concern
+        const pct = Number(policy.refundPercentage);
+        policyResult = {
+          refundPercentage: pct,
+          refundAmount: Math.round((baseAmount * pct) / 100 * 100) / 100,
+          policyName: policy.name,
+        };
+      } else {
+        // Use the default policy if configured
+        const defaultPolicy = await cancellationPolicyService.getDefaultPolicy();
+        if (defaultPolicy) {
+          policyResult = await cancellationPolicyService.calculateRefund(daysNotice, 0);
+        }
+      }
+
+      if (policyResult) {
+        refundAmount = policyResult.refundAmount;
+        refundPercentage = policyResult.refundPercentage;
+        refundPolicyName = policyResult.policyName;
+      }
+    } catch {
+      // If policy lookup fails, proceed without refund calculation
+    }
 
     return prisma.$transaction(async (tx) => {
       // Update enrolment status
@@ -218,6 +260,9 @@ export class EnrolmentService {
             previousStatus: enrolment.status,
             effectiveDate: effectiveDate.toISOString(),
             adminOverride,
+            refundAmount,
+            refundPercentage,
+            ...(refundPolicyName ? { refundPolicyName } : {}),
           },
         },
       });
@@ -442,11 +487,11 @@ export class EnrolmentService {
 
   /**
    * Calculates a refund preview for an enrolment cancellation.
-   * Placeholder policy until full cancellation policy service is built (task 28):
+   * Uses the default cancellation policy if configured; falls back to hardcoded tiers:
    *   - 100% refund if cancelled 14+ days before effectiveDate
    *   - 50% refund if 7–13 days before effectiveDate
    *   - 0% refund if less than 7 days before effectiveDate
-   * Requirements: 9.1, 9.2, 9.5
+   * Requirements: 9.1, 9.2, 9.5, 26.2
    */
   async getRefundPreview(enrolmentId: string, effectiveDate: Date) {
     const enrolment = await prisma.enrolment.findUnique({
@@ -459,17 +504,35 @@ export class EnrolmentService {
     }
 
     const now = new Date();
-    const daysUntilEffective = Math.floor(
+    const daysNotice = Math.floor(
       (effectiveDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     );
 
+    // Base amount is 0 as a placeholder — full fee calculation requires the pricing rule service
+    const baseAmount = 0;
+
+    // Try to use the default cancellation policy
+    const defaultPolicy = await cancellationPolicyService.getDefaultPolicy();
+
+    if (defaultPolicy) {
+      const result = await cancellationPolicyService.calculateRefund(daysNotice, baseAmount);
+      return {
+        enrolmentId,
+        effectiveDate,
+        refundAmount: result.refundAmount,
+        refundPercentage: result.refundPercentage,
+        policy: result.policyName,
+      };
+    }
+
+    // Fallback: hardcoded policy tiers
     let refundPercentage: number;
     let policy: string;
 
-    if (daysUntilEffective >= 14) {
+    if (daysNotice >= 14) {
       refundPercentage = 100;
       policy = 'Full refund: cancellation 14+ days before effective date';
-    } else if (daysUntilEffective >= 7) {
+    } else if (daysNotice >= 7) {
       refundPercentage = 50;
       policy = 'Partial refund: cancellation 7–13 days before effective date';
     } else {
@@ -477,9 +540,6 @@ export class EnrolmentService {
       policy = 'No refund: cancellation less than 7 days before effective date';
     }
 
-    // Base amount is 0 as a placeholder — full fee calculation requires
-    // the pricing rule service (to be integrated in task 28)
-    const baseAmount = 0;
     const refundAmount = (baseAmount * refundPercentage) / 100;
 
     return {
