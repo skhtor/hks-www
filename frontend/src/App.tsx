@@ -16,6 +16,7 @@ import BillingPage from './pages/customer/BillingPage';
 import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
 import ClassRollPage from './pages/teacher/ClassRollPage';
 import AttendancePage from './pages/teacher/AttendancePage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/teacher/dashboard" element={<TeacherDashboardPage />} />
               <Route path="/teacher/classes/:id/roll" element={<ClassRollPage />} />
               <Route path="/teacher/classes/:id/attendance" element={<AttendancePage />} />
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             </Route>
           </Route>
         </Routes>

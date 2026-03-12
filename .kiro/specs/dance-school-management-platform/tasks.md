@@ -691,7 +691,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 17.1, 17.2, 17.3_
 
 - [~] 33. Frontend - Admin portal
-  - [~] 33.1 Implement admin dashboard
+  - [x] 33.1 Implement admin dashboard
     - Display key metrics
     - Show Xero sync status
     - Display recent activity
