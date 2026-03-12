@@ -561,7 +561,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Apply location tracking in Xero
     - _Requirements: 28.2, 28.3, 28.4, 28.5_
   
-  - [~] 25.3 Write property test for location filtering
+  - [-] 25.3 Write property test for location filtering
     - **Property 46: Location Filtering**
     - **Validates: Requirements 28.3**
 
