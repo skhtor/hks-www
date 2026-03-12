@@ -19,6 +19,7 @@ import reportRoutes from './routes/report.routes';
 import locationRoutes from './routes/location.routes';
 import merchandiseRoutes from './routes/merchandise.routes';
 import termRoutes from './routes/term.routes';
+import cancellationPolicyRoutes from './routes/cancellation-policy.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -104,6 +105,9 @@ export const createApp = (): Application => {
 
   // Term routes
   app.use('/api/terms', termRoutes);
+
+  // Cancellation policy routes
+  app.use('/api/cancellation-policies', cancellationPolicyRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

@@ -506,6 +506,22 @@ model Term {
   @@map("term")
 }
 
+// Cancellation Policy Configuration
+model CancellationPolicy {
+  id                String   @id @default(uuid())
+  name              String
+  noticePeriodDays  Int
+  refundPercentage  Decimal  @db.Decimal(5, 2)
+  isDefault         Boolean  @default(false)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([isDefault])
+  @@index([isActive])
+  @@map("cancellation_policy")
+}
+
 // Audit Logging
 model AuditLog {
   id         String   @id @default(uuid())
