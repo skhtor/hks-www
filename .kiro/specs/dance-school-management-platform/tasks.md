@@ -703,7 +703,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Manage teacher assignments
     - _Requirements: 8.1, 8.2, 8.3, 24.1, 24.2_
   
-  - [~] 33.3 Implement enrolment management UI
+  - [x] 33.3 Implement enrolment management UI
     - Display all enrolments
     - Move students between classes
     - Cancel enrolments with refunds
