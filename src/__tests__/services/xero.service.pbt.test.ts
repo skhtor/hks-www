@@ -17,7 +17,8 @@ jest.mock('../../config/database', () => ({
       create: jest.fn(),
       update: jest.fn(),
     },
-    syncLog: { create: jest.fn() },
+    payment: { findUnique: jest.fn() },
+    syncLog: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn(), findMany: jest.fn() },
   },
 }));
 
@@ -434,6 +435,321 @@ describe('Property 25: Invoice Generation Idempotency', () => {
         }
       ),
       { numRuns: 20 }
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Arbitraries and helpers for payment reconciliation (Properties 26 & 27)
+// ---------------------------------------------------------------------------
+
+const paymentIdArb = fc.uuid();
+const xeroPaymentIdArb = fc.uuid();
+
+/** Builds a full payment amount (not partial) */
+const fullPaymentAmountArb = fc.integer({ min: 50, max: 5000 }).map((n) => n);
+
+/** Builds a partial payment amount given a total */
+function partialAmountArb(total: number) {
+  return fc.integer({ min: 1, max: total - 1 });
+}
+
+interface MockPayment {
+  id: string;
+  invoiceId: string;
+  customerId: string;
+  amount: number;
+  currency: string;
+  status: string;
+  gatewayPaymentId: string | null;
+  paidAt: Date | null;
+  createdAt: Date;
+  invoice: {
+    id: string;
+    xeroInvoice: { xeroInvoiceId: string; invoiceId: string } | null;
+  };
+}
+
+function buildMockPayment(
+  paymentId: string,
+  invoiceId: string,
+  amount: number,
+  status: string,
+  xeroInvoiceId: string | null
+): MockPayment {
+  return {
+    id: paymentId,
+    invoiceId,
+    customerId: 'cust-abc',
+    amount,
+    currency: 'AUD',
+    status,
+    gatewayPaymentId: 'pi_test_123',
+    paidAt: new Date('2025-06-01'),
+    createdAt: new Date('2025-06-01'),
+    invoice: {
+      id: invoiceId,
+      xeroInvoice: xeroInvoiceId
+        ? { xeroInvoiceId, invoiceId }
+        : null,
+    },
+  };
+}
+
+function makeXeroServiceForPayment(): {
+  svc: XeroService;
+  accountingApi: {
+    createPayment: jest.Mock;
+    createInvoices: jest.Mock;
+    updateInvoice: jest.Mock;
+    getContacts: jest.Mock;
+    createContacts: jest.Mock;
+    updateContact: jest.Mock;
+  };
+} {
+  const svc = new XeroService();
+
+  const XeroClientMock = require('xero-node').XeroClient as jest.Mock;
+  const xeroClientInstance =
+    XeroClientMock.mock.results[XeroClientMock.mock.results.length - 1]?.value ?? {};
+
+  const accountingApi = xeroClientInstance.accountingApi as {
+    createPayment: jest.Mock;
+    createInvoices: jest.Mock;
+    updateInvoice: jest.Mock;
+    getContacts: jest.Mock;
+    createContacts: jest.Mock;
+    updateContact: jest.Mock;
+  };
+
+  accountingApi.createPayment = jest.fn();
+  accountingApi.createInvoices = jest.fn();
+  accountingApi.updateInvoice = jest.fn();
+  accountingApi.getContacts = jest.fn();
+  accountingApi.createContacts = jest.fn();
+  accountingApi.updateContact = jest.fn();
+
+  (svc as unknown as { getClient: () => Promise<unknown> }).getClient = jest
+    .fn()
+    .mockResolvedValue(xeroClientInstance);
+  (svc as unknown as { getTenantId: () => string }).getTenantId = jest
+    .fn()
+    .mockReturnValue('tenant-123');
+
+  return { svc, accountingApi };
+}
+
+const mockedPrismaPayment = prisma as jest.Mocked<typeof prisma> & {
+  payment: { findUnique: jest.Mock };
+  xeroInvoice: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
+  syncLog: { create: jest.Mock };
+};
+
+// ---------------------------------------------------------------------------
+// Property 26: Payment Reconciliation
+// ---------------------------------------------------------------------------
+
+describe('Property 26: Payment Reconciliation', () => {
+  /**
+   * Property 26: Payment Reconciliation
+   * Feature: dance-school-management-platform
+   * For any successful payment in the system, the corresponding Xero invoice
+   * should be marked as paid with the correct payment amount.
+   * **Validates: Requirements 12.1**
+   */
+  it('should create a Xero payment record with the correct full amount for a PAID payment', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        paymentIdArb,
+        fc.uuid(), // invoiceId
+        xeroInvoiceIdArb,
+        xeroPaymentIdArb,
+        fullPaymentAmountArb,
+        async (paymentId, invoiceId, xeroInvoiceId, xeroPaymentId, amount) => {
+          (mockedPrismaPayment.syncLog.create as jest.Mock).mockReset().mockResolvedValue({});
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockReset();
+          (mockedPrismaPayment.xeroInvoice.findUnique as jest.Mock).mockReset();
+
+          const { svc, accountingApi } = makeXeroServiceForPayment();
+
+          // Payment is PAID and invoice already has a Xero link
+          const mockPayment = buildMockPayment(paymentId, invoiceId, amount, 'PAID', xeroInvoiceId);
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockResolvedValue(mockPayment);
+
+          accountingApi.createPayment.mockResolvedValue({
+            body: { payments: [{ paymentID: xeroPaymentId }] },
+          });
+
+          const result = await svc.syncPayment(paymentId);
+
+          expect(result.success).toBe(true);
+          expect(result.xeroPaymentId).toBe(xeroPaymentId);
+
+          // Verify createPayment was called with the correct amount
+          expect(accountingApi.createPayment).toHaveBeenCalledTimes(1);
+          const callArgs = accountingApi.createPayment.mock.calls[0];
+          const payload = callArgs[1] as { invoice: { invoiceID: string }; amount: number };
+          expect(payload.invoice.invoiceID).toBe(xeroInvoiceId);
+          expect(payload.amount).toBe(amount);
+        }
+      ),
+      { numRuns: 20 }
+    );
+  });
+
+  it('should reject syncing a payment that is not in a paid state', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        paymentIdArb,
+        fc.uuid(),
+        xeroInvoiceIdArb,
+        fc.constantFrom('PENDING', 'PROCESSING', 'FAILED', 'REFUNDED'),
+        async (paymentId, invoiceId, xeroInvoiceId, nonPaidStatus) => {
+          (mockedPrismaPayment.syncLog.create as jest.Mock).mockReset().mockResolvedValue({});
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockReset();
+
+          const { svc } = makeXeroServiceForPayment();
+
+          const mockPayment = buildMockPayment(paymentId, invoiceId, 100, nonPaidStatus, xeroInvoiceId);
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockResolvedValue(mockPayment);
+
+          const result = await svc.syncPayment(paymentId);
+
+          expect(result.success).toBe(false);
+          expect(result.error).toContain('not in a paid state');
+        }
+      ),
+      { numRuns: 20 }
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Property 27: Partial Payment Recording
+// ---------------------------------------------------------------------------
+
+describe('Property 27: Partial Payment Recording', () => {
+  /**
+   * Property 27: Partial Payment Recording
+   * Feature: dance-school-management-platform
+   * For any partial payment, the Xero payment record should reflect the exact
+   * partial amount paid, not the full invoice total.
+   * **Validates: Requirements 12.4**
+   */
+  it('should record the exact partial amount in Xero, not the full invoice total', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        paymentIdArb,
+        fc.uuid(), // invoiceId
+        xeroInvoiceIdArb,
+        xeroPaymentIdArb,
+        fc.integer({ min: 100, max: 5000 }), // full invoice total
+        async (paymentId, invoiceId, xeroInvoiceId, xeroPaymentId, fullTotal) => {
+          // Derive a partial amount strictly less than the full total
+          const partialAmount = Math.floor(fullTotal / 2);
+          if (partialAmount <= 0) return; // skip degenerate case
+
+          (mockedPrismaPayment.syncLog.create as jest.Mock).mockReset().mockResolvedValue({});
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockReset();
+          (mockedPrismaPayment.xeroInvoice.findUnique as jest.Mock).mockReset();
+
+          const { svc, accountingApi } = makeXeroServiceForPayment();
+
+          // Payment records the partial amount, status is PAID (partial payment scenario)
+          const mockPayment = buildMockPayment(paymentId, invoiceId, partialAmount, 'PAID', xeroInvoiceId);
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockResolvedValue(mockPayment);
+
+          accountingApi.createPayment.mockResolvedValue({
+            body: { payments: [{ paymentID: xeroPaymentId }] },
+          });
+
+          const result = await svc.syncPayment(paymentId);
+
+          expect(result.success).toBe(true);
+          expect(result.xeroPaymentId).toBe(xeroPaymentId);
+
+          // The amount sent to Xero must be the partial amount, not the full total
+          const callArgs = accountingApi.createPayment.mock.calls[0];
+          const payload = callArgs[1] as { amount: number };
+          expect(payload.amount).toBe(partialAmount);
+          expect(payload.amount).toBeLessThan(fullTotal);
+        }
+      ),
+      { numRuns: 20 }
+    );
+  });
+
+  it('should auto-sync the invoice to Xero before recording payment if not yet synced', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        paymentIdArb,
+        fc.uuid(), // invoiceId
+        xeroInvoiceIdArb,
+        xeroPaymentIdArb,
+        fullPaymentAmountArb,
+        async (paymentId, invoiceId, xeroInvoiceId, xeroPaymentId, amount) => {
+          (mockedPrismaPayment.syncLog.create as jest.Mock).mockReset().mockResolvedValue({});
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockReset();
+          (mockedPrismaPayment.xeroInvoice.findUnique as jest.Mock).mockReset();
+          (mockedPrismaPayment.xeroContact.findUnique as jest.Mock).mockReset();
+          (mockedPrismaPayment.invoice.findUnique as jest.Mock).mockReset();
+          (mockedPrismaPayment.xeroInvoice.create as jest.Mock).mockReset();
+
+          const { svc, accountingApi } = makeXeroServiceForPayment();
+
+          // Payment has NO xeroInvoice link yet
+          const mockPayment = buildMockPayment(paymentId, invoiceId, amount, 'PAID', null);
+          (mockedPrismaPayment.payment.findUnique as jest.Mock).mockResolvedValue(mockPayment);
+
+          // After syncInvoice, xeroInvoice record is created
+          (mockedPrismaPayment.xeroInvoice.findUnique as jest.Mock).mockResolvedValue({
+            invoiceId,
+            xeroInvoiceId,
+          });
+
+          // syncInvoice internals: invoice lookup
+          (mockedPrismaPayment.invoice.findUnique as jest.Mock).mockResolvedValue({
+            id: invoiceId,
+            invoiceNumber: 'INV-9999',
+            customerId: 'cust-abc',
+            dueDate: new Date('2025-12-31'),
+            lineItems: [{ description: 'Dance class', quantity: 1, unitAmount: amount, accountCode: '200' }],
+            xeroInvoice: null,
+            customer: { id: 'cust-abc', name: 'Test Customer' },
+          });
+
+          // syncInvoice internals: xeroContact lookup
+          (mockedPrismaPayment.xeroContact.findUnique as jest.Mock).mockResolvedValue({
+            customerId: 'cust-abc',
+            xeroContactId: 'xero-contact-abc',
+          });
+
+          // syncInvoice creates the Xero invoice
+          accountingApi.createInvoices.mockResolvedValue({
+            body: { invoices: [{ invoiceID: xeroInvoiceId }] },
+          });
+          (mockedPrismaPayment.xeroInvoice.create as jest.Mock).mockResolvedValue({
+            invoiceId,
+            xeroInvoiceId,
+          });
+
+          // syncPayment creates the Xero payment
+          accountingApi.createPayment.mockResolvedValue({
+            body: { payments: [{ paymentID: xeroPaymentId }] },
+          });
+
+          const result = await svc.syncPayment(paymentId);
+
+          expect(result.success).toBe(true);
+          expect(result.xeroPaymentId).toBe(xeroPaymentId);
+
+          // Invoice was synced first (createInvoices called once)
+          expect(accountingApi.createInvoices).toHaveBeenCalledTimes(1);
+          // Then payment was recorded
+          expect(accountingApi.createPayment).toHaveBeenCalledTimes(1);
+        }
+      ),
+      { numRuns: 15 }
     );
   });
 });
