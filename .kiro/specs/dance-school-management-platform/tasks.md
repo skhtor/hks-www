@@ -410,7 +410,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
 
 
 - [ ] 19. Teacher portal
-  - [~] 19.1 Implement teacher dashboard
+  - [x] 19.1 Implement teacher dashboard
     - Create endpoint to list teacher's classes for current week
     - Display class information (time, location, level)
     - _Requirements: 7.1, 7.2_

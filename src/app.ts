@@ -62,6 +62,7 @@ export const createApp = (): Application => {
 
   // Teacher routes
   app.use('/api/teachers', teacherRoutes);
+  app.use('/api/teacher', teacherRoutes);
 
   // Class routes
   app.use('/api/classes', classRoutes);

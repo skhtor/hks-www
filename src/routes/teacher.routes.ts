@@ -55,6 +55,20 @@ router.get('/', authorize(UserRole.ADMIN), async (_req: Request, res: Response) 
 });
 
 /**
+ * GET /api/teachers/dashboard
+ * Get the authenticated teacher's classes for the current week.
+ * Requirements: 7.1, 7.2 - Teacher dashboard with weekly classes, time, location, level
+ */
+router.get('/dashboard', authorize(UserRole.TEACHER, UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const classes = await teacherService.getWeeklyClasses(req.user!.userId);
+    res.json({ success: true, data: classes });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
  * GET /api/teachers/me
  * Get the authenticated teacher's own profile.
  * Requirements: 7.1 - Teacher can view their own profile

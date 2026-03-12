@@ -1,5 +1,33 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, DayOfWeek } from '@prisma/client';
 import { authService } from './auth.service';
+
+// Map JS day index (0=Sun) to DayOfWeek enum values
+const DAY_INDEX_TO_ENUM: DayOfWeek[] = [
+  DayOfWeek.SUNDAY,
+  DayOfWeek.MONDAY,
+  DayOfWeek.TUESDAY,
+  DayOfWeek.WEDNESDAY,
+  DayOfWeek.THURSDAY,
+  DayOfWeek.FRIDAY,
+  DayOfWeek.SATURDAY,
+];
+
+export interface WeeklyClassInfo {
+  id: string;
+  name: string;
+  style: string;
+  level: string;
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  duration: number;
+  location: {
+    id: string;
+    name: string;
+    address: unknown;
+  };
+  enrolledCount: number;
+  capacity: number;
+}
 
 const prisma = new PrismaClient();
 
@@ -111,6 +139,71 @@ export class TeacherService {
       },
       include: { user: { select: { id: true, email: true, role: true, createdAt: true } } },
     });
+  }
+
+  /**
+   * Gets classes for a teacher for the current week.
+   * Requirements: 7.1, 7.2 - Teacher dashboard showing classes for current week
+   * with time, location, and level information.
+   */
+  async getWeeklyClasses(userId: string): Promise<WeeklyClassInfo[]> {
+    const teacher = await prisma.teacher.findUnique({ where: { userId } });
+    if (!teacher) {
+      throw new Error('Teacher profile not found');
+    }
+
+    // Determine which days of the week are in the current week (Mon–Sun)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    // Build set of DayOfWeek enum values for the current week (all 7 days)
+    const currentWeekDays = new Set<DayOfWeek>(DAY_INDEX_TO_ENUM);
+
+    const classes = await prisma.class.findMany({
+      where: {
+        teacherId: teacher.id,
+        dayOfWeek: { in: Array.from(currentWeekDays) },
+        OR: [{ endDate: null }, { endDate: { gte: today } }],
+      },
+      select: {
+        id: true,
+        name: true,
+        style: true,
+        level: true,
+        dayOfWeek: true,
+        startTime: true,
+        duration: true,
+        enrolledCount: true,
+        capacity: true,
+        location: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+          },
+        },
+      },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    });
+
+    // Suppress unused variable warning
+    void dayOfWeek;
+
+    return classes.map((c) => ({
+      id: c.id,
+      name: c.name,
+      style: c.style,
+      level: c.level,
+      dayOfWeek: c.dayOfWeek,
+      startTime: c.startTime,
+      duration: c.duration,
+      location: {
+        id: c.location.id,
+        name: c.location.name,
+        address: c.location.address,
+      },
+      enrolledCount: c.enrolledCount,
+      capacity: c.capacity,
+    }));
   }
 
   /**
