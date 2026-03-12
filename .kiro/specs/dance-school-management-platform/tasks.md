@@ -488,7 +488,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Create email sending service
     - _Requirements: 14.1_
   
-  - [~] 22.2 Implement notification templates
+  - [x] 22.2 Implement notification templates
     - Create default templates for all notification types
     - Implement variable substitution
     - _Requirements: 23.4_
