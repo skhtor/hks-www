@@ -597,7 +597,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 29.1, 29.2, 29.3, 29.4, 29.5_
 
 - [ ] 28. Cancellation and refund policies
-  - [-] 28.1 Implement policy configuration
+  - [x] 28.1 Implement policy configuration
     - Create endpoints for cancellation policy settings
     - Configure notice periods and refund percentages
     - _Requirements: 26.1_
