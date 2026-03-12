@@ -415,7 +415,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Display class information (time, location, level)
     - _Requirements: 7.1, 7.2_
   
-  - [~] 19.2 Implement class roll viewing
+  - [x] 19.2 Implement class roll viewing
     - Create endpoint to get enrolled students for a class
     - Apply access policy for sensitive information
     - Enforce teacher can only view assigned classes

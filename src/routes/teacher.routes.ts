@@ -55,6 +55,63 @@ router.get('/', authorize(UserRole.ADMIN), async (_req: Request, res: Response) 
 });
 
 /**
+ * GET /api/teacher/classes/:classId/roll
+ * Get the class roll (enrolled students) for a specific class.
+ * - TEACHER role: can only view their assigned classes (Req 7.7)
+ * - ADMIN role: can view any class roll
+ * Requirements: 7.3, 7.4, 7.7
+ */
+router.get(
+  '/classes/:classId/roll',
+  authorize(UserRole.TEACHER, UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { classId } = req.params;
+
+      if (req.user!.role === UserRole.ADMIN) {
+        // Admin can view any class roll — fetch directly without teacher ownership check
+        const { PrismaClient: PC } = await import('@prisma/client');
+        const adminPrisma = new PC();
+        try {
+          const { authorizationService: authSvc } = await import('../services/authorization.service');
+          const policy = await authSvc.getTeacherAccessPolicy('admin');
+          const enrolments = await adminPrisma.enrolment.findMany({
+            where: { classId, status: 'ACTIVE' },
+            include: { dancer: true },
+          });
+          const roll = enrolments.map((enrolment) => {
+            const student: Record<string, unknown> = {
+              id: enrolment.dancer.id,
+              firstName: enrolment.dancer.firstName,
+              lastName: enrolment.dancer.lastName,
+              enrolmentId: enrolment.id,
+              enrolmentStatus: enrolment.status,
+            };
+            if (policy.showMedicalNotes && enrolment.dancer.medicalNotes) {
+              student.medicalNotes = enrolment.dancer.medicalNotes;
+            }
+            if (policy.showAllergies && enrolment.dancer.allergies) {
+              student.allergies = enrolment.dancer.allergies;
+            }
+            return student;
+          });
+          res.json({ success: true, data: roll });
+        } finally {
+          await adminPrisma.$disconnect();
+        }
+        return;
+      }
+
+      // TEACHER role: enforce assigned-class restriction
+      const roll = await teacherService.getClassRoll(req.user!.userId, classId);
+      res.json({ success: true, data: roll });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+);
+
+/**
  * GET /api/teachers/dashboard
  * Get the authenticated teacher's classes for the current week.
  * Requirements: 7.1, 7.2 - Teacher dashboard with weekly classes, time, location, level
@@ -186,6 +243,14 @@ function handleError(error: unknown, res: Response): void {
       res.status(409).json({
         success: false,
         error: { code: 'CONFLICT', message: error.message },
+      });
+      return;
+    }
+
+    if (error.message === 'Teacher does not have access to this class') {
+      res.status(403).json({
+        success: false,
+        error: { code: 'FORBIDDEN', message: error.message },
       });
       return;
     }

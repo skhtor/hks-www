@@ -1,5 +1,6 @@
 import { PrismaClient, DayOfWeek } from '@prisma/client';
 import { authService } from './auth.service';
+import { authorizationService } from './authorization.service';
 
 // Map JS day index (0=Sun) to DayOfWeek enum values
 const DAY_INDEX_TO_ENUM: DayOfWeek[] = [
@@ -45,6 +46,16 @@ export interface UpdateTeacherInput {
   bio?: string;
   specialties?: string[];
   photoUrl?: string;
+}
+
+export interface ClassRollStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  enrolmentId: string;
+  enrolmentStatus: string;
+  medicalNotes?: string;
+  allergies?: string;
 }
 
 export class TeacherService {
@@ -204,6 +215,57 @@ export class TeacherService {
       enrolledCount: c.enrolledCount,
       capacity: c.capacity,
     }));
+  }
+
+  /**
+   * Gets the class roll (enrolled students) for a class.
+   * Verifies the teacher is assigned to the class.
+   * Applies access policy: by default show name only; if sensitive info is enabled,
+   * also show medicalNotes and allergies.
+   *
+   * Requirements: 7.3, 7.4, 7.7
+   */
+  async getClassRoll(teacherUserId: string, classId: string): Promise<ClassRollStudent[]> {
+    // Resolve teacher record from userId
+    const teacher = await prisma.teacher.findUnique({ where: { userId: teacherUserId } });
+    if (!teacher) {
+      throw new Error('Teacher profile not found');
+    }
+
+    // Verify teacher is assigned to this class (Req 7.7)
+    const hasAccess = await authorizationService.canTeacherAccessClass(teacher.id, classId);
+    if (!hasAccess) {
+      throw new Error('Teacher does not have access to this class');
+    }
+
+    // Get access policy for this teacher (Req 7.4)
+    const policy = await authorizationService.getTeacherAccessPolicy(teacher.id);
+
+    // Fetch active enrolments with dancer info (Req 7.3)
+    const enrolments = await prisma.enrolment.findMany({
+      where: { classId, status: 'ACTIVE' },
+      include: { dancer: true },
+    });
+
+    return enrolments.map((enrolment) => {
+      const student: ClassRollStudent = {
+        id: enrolment.dancer.id,
+        firstName: enrolment.dancer.firstName,
+        lastName: enrolment.dancer.lastName,
+        enrolmentId: enrolment.id,
+        enrolmentStatus: enrolment.status,
+      };
+
+      // Apply access policy for sensitive fields (Req 7.4)
+      if (policy.showMedicalNotes && enrolment.dancer.medicalNotes) {
+        student.medicalNotes = enrolment.dancer.medicalNotes;
+      }
+      if (policy.showAllergies && enrolment.dancer.allergies) {
+        student.allergies = enrolment.dancer.allergies;
+      }
+
+      return student;
+    });
   }
 
   /**
