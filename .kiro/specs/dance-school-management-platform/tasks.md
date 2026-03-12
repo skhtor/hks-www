@@ -448,7 +448,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Validate all required fields
     - _Requirements: 8.1, 8.2, 8.3_
   
-  - [-] 20.2 Implement admin enrolment management
+  - [x] 20.2 Implement admin enrolment management
     - Create endpoints to view all enrolments
     - Implement move enrolment between classes
     - Implement cancel enrolment with refund calculation
