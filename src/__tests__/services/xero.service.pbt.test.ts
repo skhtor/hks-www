@@ -11,6 +11,12 @@ jest.mock('../../config/database', () => ({
       create: jest.fn(),
       update: jest.fn(),
     },
+    invoice: { findUnique: jest.fn() },
+    xeroInvoice: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
     syncLog: { create: jest.fn() },
   },
 }));
@@ -31,6 +37,10 @@ jest.mock('xero-node', () => {
       accountingApi: mockAccountingApi,
     })),
     Phone: { PhoneTypeEnum: { DEFAULT: 'DEFAULT' } },
+    Invoice: {
+      TypeEnum: { ACCREC: 'ACCREC', ACCPAY: 'ACCPAY' },
+      StatusEnum: { AUTHORISED: 'AUTHORISED', DRAFT: 'DRAFT' },
+    },
   };
 });
 
@@ -222,5 +232,208 @@ describe('XeroService Property-Based Tests', () => {
         { numRuns: 20 }
       );
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Typed reference for invoice-related prisma mocks (Property 25)
+// ---------------------------------------------------------------------------
+
+const mockedPrismaExtended = prisma as jest.Mocked<typeof prisma> & {
+  invoice: { findUnique: jest.Mock };
+  xeroInvoice: { findUnique: jest.Mock; create: jest.Mock; update: jest.Mock };
+};
+
+// ---------------------------------------------------------------------------
+// Arbitraries for invoice data
+// ---------------------------------------------------------------------------
+
+const invoiceIdArb = fc.uuid();
+const xeroInvoiceIdArb = fc.uuid();
+const invoiceNumberArb = fc
+  .integer({ min: 1000, max: 9999 })
+  .map((n) => `INV-${n}`);
+
+const lineItemArb = fc
+  .tuple(
+    fc.string({ minLength: 3, maxLength: 20 }).filter((s) => /^[a-zA-Z ]+$/.test(s)),
+    fc.integer({ min: 1, max: 10 }),
+    fc.integer({ min: 10, max: 500 })
+  )
+  .map(([description, quantity, unitAmount]) => ({
+    description,
+    quantity,
+    unitAmount,
+    accountCode: '200',
+  }));
+
+const invoiceArb = fc
+  .tuple(
+    invoiceIdArb,
+    invoiceNumberArb,
+    fc.uuid(), // customerId
+    fc.array(lineItemArb, { minLength: 1, maxLength: 3 })
+  )
+  .map(([id, invoiceNumber, customerId, lineItems]) => ({
+    id,
+    invoiceNumber,
+    customerId,
+    lineItems,
+    dueDate: new Date('2025-12-31'),
+    xeroInvoice: null as null | { xeroInvoiceId: string; invoiceId: string },
+    customer: { id: customerId, name: 'Test Customer' },
+  }));
+
+// ---------------------------------------------------------------------------
+// Helper to build a XeroService with mocked getClient / getTenantId
+// (reuses the same pattern as makeXeroService above)
+// ---------------------------------------------------------------------------
+
+function makeXeroServiceForInvoice(): {
+  svc: XeroService;
+  accountingApi: {
+    createInvoices: jest.Mock;
+    updateInvoice: jest.Mock;
+    getContacts: jest.Mock;
+    createContacts: jest.Mock;
+    updateContact: jest.Mock;
+  };
+} {
+  const svc = new XeroService();
+
+  // Grab the most recently constructed XeroClient mock instance
+  const XeroClientMock = require('xero-node').XeroClient as jest.Mock;
+  const xeroClientInstance =
+    XeroClientMock.mock.results[XeroClientMock.mock.results.length - 1]?.value ?? {};
+
+  const accountingApi = xeroClientInstance.accountingApi as {
+    createInvoices: jest.Mock;
+    updateInvoice: jest.Mock;
+    getContacts: jest.Mock;
+    createContacts: jest.Mock;
+    updateContact: jest.Mock;
+  };
+
+  // Ensure all methods exist as jest.fn()
+  accountingApi.createInvoices = jest.fn();
+  accountingApi.updateInvoice = jest.fn();
+  accountingApi.getContacts = jest.fn();
+  accountingApi.createContacts = jest.fn();
+  accountingApi.updateContact = jest.fn();
+
+  (svc as unknown as { getClient: () => Promise<unknown> }).getClient = jest
+    .fn()
+    .mockResolvedValue(xeroClientInstance);
+  (svc as unknown as { getTenantId: () => string }).getTenantId = jest
+    .fn()
+    .mockReturnValue('tenant-123');
+
+  return { svc, accountingApi };
+}
+
+// ---------------------------------------------------------------------------
+// Property 25: Invoice Generation Idempotency
+// ---------------------------------------------------------------------------
+
+describe('Property 25: Invoice Generation Idempotency', () => {
+  /**
+   * Property 25: Invoice Generation Idempotency
+   * Feature: dance-school-management-platform
+   * For any enrolment, confirming the enrolment multiple times with the same
+   * idempotency key should result in exactly one Xero invoice. The second call
+   * should update, not create.
+   * **Validates: Requirements 11.1, 11.5**
+   */
+  it('should return the same xeroInvoiceId on repeated syncs and not create duplicate invoices', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        invoiceArb,
+        xeroInvoiceIdArb,
+        async (baseInvoice, xeroInvoiceId) => {
+          // Reset only call counts on specific mocks (not implementations),
+          // so XeroClient mock.results and service method mocks remain intact.
+          (mockedPrisma.syncLog.create as jest.Mock).mockReset().mockResolvedValue({});
+          (mockedPrismaExtended.invoice.findUnique as jest.Mock).mockReset();
+          (mockedPrismaExtended.xeroContact.findUnique as jest.Mock).mockReset();
+          (mockedPrismaExtended.xeroInvoice.create as jest.Mock).mockReset();
+          (mockedPrismaExtended.xeroInvoice.update as jest.Mock).mockReset();
+
+          const { svc, accountingApi } = makeXeroServiceForInvoice();
+
+          // XeroContact already exists for this customer (persistent — used by both syncInvoice calls)
+          (mockedPrismaExtended.xeroContact.findUnique as jest.Mock).mockResolvedValue({
+            customerId: baseInvoice.customerId,
+            xeroContactId: 'xero-contact-abc',
+          });
+
+          // ----------------------------------------------------------------
+          // First call: no XeroInvoice record → createInvoices → record created
+          // ----------------------------------------------------------------
+          const invoiceFirstCall = { ...baseInvoice, xeroInvoice: null };
+
+          (mockedPrismaExtended.invoice.findUnique as jest.Mock).mockResolvedValueOnce(
+            invoiceFirstCall
+          );
+
+          accountingApi.createInvoices.mockResolvedValueOnce({
+            body: { invoices: [{ invoiceID: xeroInvoiceId }] },
+          });
+
+          (mockedPrismaExtended.xeroInvoice.create as jest.Mock).mockResolvedValueOnce({
+            invoiceId: baseInvoice.id,
+            xeroInvoiceId,
+            lastSyncedAt: new Date(),
+          });
+
+          const result1 = await svc.syncInvoice(baseInvoice.id);
+
+          expect(result1.success).toBe(true);
+          expect(result1.xeroInvoiceId).toBe(xeroInvoiceId);
+
+          // createInvoices called exactly once on first sync
+          expect(accountingApi.createInvoices).toHaveBeenCalledTimes(1);
+          // updateInvoice NOT called on first sync
+          expect(accountingApi.updateInvoice).not.toHaveBeenCalled();
+
+          // ----------------------------------------------------------------
+          // Second call: XeroInvoice record exists → updateInvoice → no new record
+          // ----------------------------------------------------------------
+          const invoiceSecondCall = {
+            ...baseInvoice,
+            xeroInvoice: { xeroInvoiceId, invoiceId: baseInvoice.id },
+          };
+
+          (mockedPrismaExtended.invoice.findUnique as jest.Mock).mockResolvedValueOnce(
+            invoiceSecondCall
+          );
+
+          accountingApi.updateInvoice.mockResolvedValueOnce({
+            body: { invoices: [{ invoiceID: xeroInvoiceId }] },
+          });
+
+          (mockedPrismaExtended.xeroInvoice.update as jest.Mock).mockResolvedValueOnce({
+            invoiceId: baseInvoice.id,
+            xeroInvoiceId,
+            lastSyncedAt: new Date(),
+          });
+
+          const result2 = await svc.syncInvoice(baseInvoice.id);
+
+          expect(result2.success).toBe(true);
+          expect(result2.xeroInvoiceId).toBe(xeroInvoiceId);
+
+          // updateInvoice called exactly once on second sync
+          expect(accountingApi.updateInvoice).toHaveBeenCalledTimes(1);
+          // createInvoices still only called once total (not again on second sync)
+          expect(accountingApi.createInvoices).toHaveBeenCalledTimes(1);
+
+          // ----------------------------------------------------------------
+          // Both calls return the same xeroInvoiceId — no duplicate created
+          // ----------------------------------------------------------------
+          expect(result1.xeroInvoiceId).toBe(result2.xeroInvoiceId);
+        }
+      ),
+      { numRuns: 20 }
+    );
   });
 });
