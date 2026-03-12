@@ -17,6 +17,7 @@ import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
 import ClassRollPage from './pages/teacher/ClassRollPage';
 import AttendancePage from './pages/teacher/AttendancePage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import ClassManagementPage from './pages/admin/ClassManagementPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -47,6 +48,7 @@ export default function App() {
               <Route path="/teacher/classes/:id/roll" element={<ClassRollPage />} />
               <Route path="/teacher/classes/:id/attendance" element={<AttendancePage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin/classes" element={<ClassManagementPage />} />
             </Route>
           </Route>
         </Routes>
