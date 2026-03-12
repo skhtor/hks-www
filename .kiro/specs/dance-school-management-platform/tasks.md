@@ -649,7 +649,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Display payment status
     - _Requirements: 4.1, 6.7_
   
-  - [-] 31.2 Implement dancer profile management
+  - [x] 31.2 Implement dancer profile management
     - Create dancer profile forms
     - Handle profile updates
     - _Requirements: 1.3, 1.4, 1.5, 1.6_
