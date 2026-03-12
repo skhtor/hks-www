@@ -673,7 +673,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Download PDFs
     - _Requirements: 6.4_
 
-- [~] 32. Frontend - Teacher portal
+- [x] 32. Frontend - Teacher portal
   - [x] 32.1 Implement teacher dashboard
     - Display classes for current week
     - Quick access to class rolls
@@ -685,7 +685,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Export to CSV
     - _Requirements: 7.2, 7.3, 7.6_
   
-  - [~] 32.3 Implement attendance marking
+  - [x] 32.3 Implement attendance marking
     - Create attendance marking interface
     - Support notes
     - _Requirements: 17.1, 17.2, 17.3_

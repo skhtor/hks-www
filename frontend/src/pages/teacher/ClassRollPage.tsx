@@ -145,12 +145,20 @@ export default function ClassRollPage() {
             <h2 className="text-base font-semibold text-gray-800">
               Enrolled Students ({students.length})
             </h2>
-            <button
-              onClick={() => exportCSV(classInfo, students)}
-              className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700"
-            >
-              Export CSV
-            </button>
+            <div className="flex gap-2">
+              <Link
+                to={`/teacher/classes/${id}/attendance`}
+                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700"
+              >
+                Mark Attendance
+              </Link>
+              <button
+                onClick={() => exportCSV(classInfo, students)}
+                className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700"
+              >
+                Export CSV
+              </button>
+            </div>
           </div>
 
           {/* Student table */}
