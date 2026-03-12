@@ -4,7 +4,9 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 import { config } from './config/env';
+import { getRedisClient } from './config/redis';
 import { sanitizeInput, requestId } from './middleware/security.middleware';
+import { cacheResponse } from './middleware/cache.middleware';
 import authRoutes from './routes/auth.routes';
 import customerRoutes from './routes/customer.routes';
 import dancerRoutes from './routes/dancer.routes';
@@ -91,9 +93,26 @@ export const createApp = (): Application => {
   app.use(sanitizeInput);
 
   // Health check endpoint
-  app.get('/health', (_req: Request, res: Response) => {
-    res.status(200).json({
-      status: 'ok',
+  app.get('/health', async (_req: Request, res: Response) => {
+    const checks: Record<string, string> = { api: 'ok' };
+
+    // Check Redis
+    try {
+      const redis = getRedisClient();
+      if (redis.isOpen) {
+        await redis.ping();
+        checks.redis = 'ok';
+      } else {
+        checks.redis = 'disconnected';
+      }
+    } catch {
+      checks.redis = 'error';
+    }
+
+    const allOk = Object.values(checks).every((v) => v === 'ok');
+    res.status(allOk ? 200 : 503).json({
+      status: allOk ? 'ok' : 'degraded',
+      checks,
       timestamp: new Date().toISOString(),
       environment: config.env,
     });
@@ -123,11 +142,11 @@ export const createApp = (): Application => {
   // Class routes
   app.use('/api/classes', classRoutes);
 
-  // Timetable routes (public)
-  app.use('/api/timetable', timetableRoutes);
+  // Timetable routes (public) - cached 5 min
+  app.use('/api/timetable', cacheResponse(300, 'timetable'), timetableRoutes);
 
-  // Fee routes
-  app.use('/api/fees', feeRoutes);
+  // Fee routes - pricing rules cached 1 hour for GET
+  app.use('/api/fees', cacheResponse(3600, 'fees'), feeRoutes);
 
   // Enrolment routes
   app.use('/api/enrolments', enrolmentRoutes);
