@@ -674,7 +674,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 6.4_
 
 - [~] 32. Frontend - Teacher portal
-  - [~] 32.1 Implement teacher dashboard
+  - [x] 32.1 Implement teacher dashboard
     - Display classes for current week
     - Quick access to class rolls
     - _Requirements: 7.1_
