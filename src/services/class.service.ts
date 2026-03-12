@@ -476,6 +476,162 @@ export class ClassService {
   }
 
   /**
+   * Assigns a substitute teacher for a specific class date.
+   * Stores the assignment in AuditLog and notifies enrolled customers.
+   * Requirements: 24.3
+   */
+  async assignSubstituteTeacher(
+    classId: string,
+    substituteTeacherId: string,
+    classDate: string,
+    adminUserId: string,
+  ) {
+    // Verify class exists
+    const cls = await prisma.class.findUnique({
+      where: { id: classId },
+      select: { id: true, name: true, teacherId: true },
+    });
+    if (!cls) {
+      throw new Error('Class not found');
+    }
+
+    // Verify substitute teacher exists
+    const substitute = await prisma.teacher.findUnique({
+      where: { id: substituteTeacherId },
+      select: { id: true, name: true },
+    });
+    if (!substitute) {
+      throw new Error('Substitute teacher not found');
+    }
+
+    // Create AuditLog entry for the substitute assignment
+    const auditLog = await prisma.auditLog.create({
+      data: {
+        userId: adminUserId,
+        action: 'SUBSTITUTE_ASSIGNED',
+        entityType: 'Class',
+        entityId: classId,
+        changes: {
+          substituteTeacherId,
+          classDate,
+          originalTeacherId: cls.teacherId,
+        },
+      },
+    });
+
+    // Find all active enrolments for this class, including dancer -> household -> customers
+    const enrolments = await prisma.enrolment.findMany({
+      where: { classId, status: 'ACTIVE' },
+      include: {
+        dancer: {
+          include: {
+            household: {
+              include: {
+                customers: { select: { id: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Collect unique customer IDs
+    const customerIds = new Set<string>();
+    for (const enrolment of enrolments) {
+      for (const customer of enrolment.dancer.household.customers) {
+        customerIds.add(customer.id);
+      }
+    }
+
+    // Create a NotificationLog entry for each enrolled customer
+    const notifications = await Promise.all(
+      Array.from(customerIds).map((customerId) =>
+        prisma.notificationLog.create({
+          data: {
+            customerId,
+            type: 'CLASS_CHANGE',
+            templateId: 'substitute-teacher-assigned',
+            variables: {
+              classId,
+              className: cls.name,
+              classDate,
+              substituteTeacherId,
+              substituteTeacherName: substitute.name,
+            },
+            status: 'PENDING',
+          },
+        }),
+      ),
+    );
+
+    return {
+      auditLogId: auditLog.id,
+      classId,
+      className: cls.name,
+      classDate,
+      originalTeacherId: cls.teacherId,
+      substituteTeacherId,
+      substituteTeacherName: substitute.name,
+      notificationsCreated: notifications.length,
+    };
+  }
+
+  /**
+   * Gets the substitute assignment for a class on a specific date.
+   * Reads from AuditLog where action='SUBSTITUTE_ASSIGNED'.
+   * Requirements: 24.3
+   */
+  async getSubstituteAssignment(classId: string, classDate: string) {
+    // Verify class exists
+    const cls = await prisma.class.findUnique({
+      where: { id: classId },
+      select: { id: true, name: true, teacherId: true },
+    });
+    if (!cls) {
+      throw new Error('Class not found');
+    }
+
+    // Find the most recent substitute assignment for this class and date
+    const auditLogs = await prisma.auditLog.findMany({
+      where: {
+        action: 'SUBSTITUTE_ASSIGNED',
+        entityType: 'Class',
+        entityId: classId,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Filter by classDate in the changes JSON
+    const match = auditLogs.find((log) => {
+      const changes = log.changes as Record<string, unknown>;
+      return changes.classDate === classDate;
+    });
+
+    if (!match) {
+      return null;
+    }
+
+    const changes = match.changes as Record<string, unknown>;
+    const substituteTeacherId = changes.substituteTeacherId as string;
+
+    const substitute = await prisma.teacher.findUnique({
+      where: { id: substituteTeacherId },
+      select: { id: true, name: true },
+    });
+
+    return {
+      auditLogId: match.id,
+      classId,
+      className: cls.name,
+      classDate,
+      originalTeacherId: changes.originalTeacherId as string,
+      substituteTeacherId,
+      substituteTeacherName: substitute?.name ?? null,
+      assignedAt: match.createdAt,
+    };
+  }
+
+  /**
    * Gets all classes assigned to a specific teacher.
    * Requirements: 2.3, 7.1 - Teacher sees only their assigned classes
    */

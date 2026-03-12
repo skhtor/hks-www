@@ -134,6 +134,61 @@ router.get('/teacher/:teacherId', authorize(UserRole.ADMIN, UserRole.TEACHER), a
   }
 });
 
+// Validation schema for substitute assignment
+const assignSubstituteSchema = z.object({
+  substituteTeacherId: z.string().min(1, 'Substitute teacher ID is required'),
+  classDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'classDate must be an ISO date (YYYY-MM-DD)'),
+});
+
+/**
+ * POST /api/classes/:id/substitute
+ * Assign a substitute teacher for a specific date (admin only).
+ * Requirements: 24.3
+ */
+router.post('/:id/substitute', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const { substituteTeacherId, classDate } = assignSubstituteSchema.parse(req.body);
+    const result = await classService.assignSubstituteTeacher(
+      req.params.id,
+      substituteTeacherId,
+      classDate,
+      req.user!.userId,
+    );
+    res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * GET /api/classes/:id/substitute
+ * Get substitute assignment for a class on a specific date (admin only).
+ * Query param: classDate (YYYY-MM-DD)
+ * Requirements: 24.3
+ */
+router.get('/:id/substitute', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const classDate = z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'classDate must be an ISO date (YYYY-MM-DD)')
+      .parse(req.query.classDate);
+
+    const result = await classService.getSubstituteAssignment(req.params.id, classDate);
+
+    if (!result) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'No substitute assignment found for this class and date' },
+      });
+      return;
+    }
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
 /**
  * GET /api/classes/:id
  * Get a class by ID.
@@ -197,7 +252,7 @@ function handleError(error: unknown, res: Response): void {
   }
 
   if (error instanceof Error) {
-    if (error.message === 'Class not found' || error.message === 'Teacher not found') {
+    if (error.message === 'Class not found' || error.message === 'Teacher not found' || error.message === 'Substitute teacher not found') {
       res.status(404).json({
         success: false,
         error: { code: 'NOT_FOUND', message: error.message },
