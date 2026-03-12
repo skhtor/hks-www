@@ -728,12 +728,12 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - View sync history
     - _Requirements: 10.3, 11.6, 12.3, 30.2_
 
-- [~] 34. Checkpoint - Frontend complete
+- [x] 34. Checkpoint - Frontend complete
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [~] 35. Accessibility and mobile responsiveness
-  - [~] 35.1 Implement accessibility features
+- [x] 35. Accessibility and mobile responsiveness
+  - [x] 35.1 Implement accessibility features
     - Add ARIA labels to interactive elements
     - Ensure keyboard navigation works
     - Implement visible focus indicators
@@ -742,14 +742,14 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Associate form labels properly
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5, 20.6_
   
-  - [~] 35.2 Implement mobile responsiveness
+  - [x] 35.2 Implement mobile responsiveness
     - Create responsive layouts for all pages
     - Ensure touch targets are 44x44 pixels minimum
     - Optimize timetable for mobile
     - Optimize checkout for mobile
     - _Requirements: 21.1, 21.2, 21.3, 21.4_
   
-  - [~] 35.3 Test accessibility compliance
+  - [x] 35.3 Test accessibility compliance
     - Run automated accessibility tests
     - Test with screen readers
     - Test keyboard-only navigation
