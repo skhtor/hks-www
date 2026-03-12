@@ -502,7 +502,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Log all notifications
     - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6_
   
-  - [~] 22.4 Implement background job queue
+  - [-] 22.4 Implement background job queue
     - Set up Bull queue with Redis
     - Create job processors for notifications and Xero sync
     - Implement retry logic
