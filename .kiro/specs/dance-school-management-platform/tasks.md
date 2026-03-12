@@ -360,7 +360,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Send overdue notifications
     - _Requirements: 6.7, 6.8_
 
-- [ ] 17. Xero integration service
+- [-] 17. Xero integration service
   - [x] 17.1 Set up Xero OAuth 2.0
     - Implement OAuth flow
     - Store and refresh access tokens securely
@@ -388,7 +388,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 25: Invoice Generation Idempotency**
     - **Validates: Requirements 11.1, 11.5**
   
-  - [ ] 17.6 Implement payment reconciliation
+  - [x] 17.6 Implement payment reconciliation
     - Mark Xero invoices as paid
     - Create payment records in Xero
     - Handle partial payments

@@ -1,4 +1,4 @@
-import { XeroClient, Contact, Contacts, Phone, Invoice as XeroInvoiceType, Invoices as XeroInvoicesType, LineItem } from 'xero-node';
+import { XeroClient, Contact, Contacts, Phone, Invoice as XeroInvoiceType, Invoices as XeroInvoicesType, LineItem, Payment as XeroPaymentType, Payments as XeroPaymentsType } from 'xero-node';
 import { prisma } from '../config/database';
 import { SyncType } from '@prisma/client';
 
@@ -397,6 +397,166 @@ export class XeroService {
   }
 
   /**
+   * Synchronizes a payment to Xero by marking the corresponding Xero invoice as paid.
+   * - Looks up the Payment by id (including invoice and xeroInvoice link).
+   * - Ensures the invoice has been synced to Xero first.
+   * - Creates a payment record in Xero against the Xero invoice.
+   * - Handles partial payments by recording the exact amount paid.
+   * - Logs the result to SyncLog.
+   *
+   * Requirements: 12.1, 12.2, 12.4
+   */
+  async syncPayment(paymentId: string): Promise<{ success: boolean; xeroPaymentId?: string; error?: string }> {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        invoice: {
+          include: { xeroInvoice: true },
+        },
+      },
+    });
+
+    if (!payment) {
+      await this.logPaymentSync(paymentId, false, 'Payment not found');
+      return { success: false, error: 'Payment not found' };
+    }
+
+    if (payment.status !== 'PAID' && payment.status !== 'PARTIALLY_REFUNDED') {
+      await this.logPaymentSync(paymentId, false, 'Payment is not in a paid state');
+      return { success: false, error: 'Payment is not in a paid state' };
+    }
+
+    const xeroInvoice = payment.invoice.xeroInvoice;
+    if (!xeroInvoice) {
+      // Sync the invoice to Xero first
+      const invoiceSyncResult = await this.syncInvoice(payment.invoiceId);
+      if (!invoiceSyncResult.success) {
+        await this.logPaymentSync(paymentId, false, `Invoice sync failed: ${invoiceSyncResult.error}`);
+        return { success: false, error: `Invoice sync failed: ${invoiceSyncResult.error}` };
+      }
+    }
+
+    // Re-fetch to get the xeroInvoice after potential sync
+    const xeroInvoiceRecord = xeroInvoice ?? (await prisma.xeroInvoice.findUnique({
+      where: { invoiceId: payment.invoiceId },
+    }));
+
+    if (!xeroInvoiceRecord) {
+      await this.logPaymentSync(paymentId, false, 'Could not resolve Xero invoice');
+      return { success: false, error: 'Could not resolve Xero invoice' };
+    }
+
+    const client = await this.getClient();
+    const tenantId = this.getTenantId();
+
+    if (!tenantId) {
+      await this.logPaymentSync(paymentId, false, 'Xero tenant not configured');
+      return { success: false, error: 'Xero tenant not configured' };
+    }
+
+    try {
+      const paidDate = (payment.paidAt ?? payment.createdAt).toISOString().split('T')[0];
+
+      const xeroPayload: XeroPaymentType = {
+        invoice: { invoiceID: xeroInvoiceRecord.xeroInvoiceId },
+        amount: Number(payment.amount),
+        date: paidDate,
+      };
+
+      const response = await client.accountingApi.createPayment(
+        tenantId,
+        xeroPayload,
+        paymentId, // idempotency key
+      );
+
+      const created = (response.body as XeroPaymentsType).payments?.[0];
+      if (!created?.paymentID) {
+        throw new Error('Xero did not return a payment ID after creation');
+      }
+
+      await this.logPaymentSync(paymentId, true);
+      return { success: true, xeroPaymentId: created.paymentID };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error during payment sync';
+      await this.logPaymentSync(paymentId, false, message);
+      return { success: false, error: message };
+    }
+  }
+
+  /**
+   * Retries a failed sync operation identified by its SyncLog ID.
+   * Increments retryCount and lastRetryAt, then re-runs the appropriate sync.
+   * Requirements: 10.3, 11.6, 12.3, 19.2, 19.3
+   */
+  async retrySync(syncLogId: string): Promise<{ success: boolean; error?: string }> {
+    const syncLog = await prisma.syncLog.findUnique({ where: { id: syncLogId } });
+    if (!syncLog) {
+      return { success: false, error: 'Sync log entry not found' };
+    }
+
+    if (syncLog.success) {
+      return { success: false, error: 'Sync log entry already succeeded' };
+    }
+
+    // Update retry metadata
+    await prisma.syncLog.update({
+      where: { id: syncLogId },
+      data: {
+        retryCount: { increment: 1 },
+        lastRetryAt: new Date(),
+      },
+    });
+
+    let result: { success: boolean; error?: string };
+
+    switch (syncLog.syncType) {
+      case SyncType.CONTACT:
+        result = await this.syncContact(syncLog.entityId);
+        break;
+      case SyncType.INVOICE:
+        result = await this.syncInvoice(syncLog.entityId);
+        break;
+      case SyncType.PAYMENT:
+        result = await this.syncPayment(syncLog.entityId);
+        break;
+      default:
+        return { success: false, error: `Unknown sync type: ${syncLog.syncType}` };
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns failed sync log entries with optional filtering.
+   * Requirements: 10.3, 11.6, 12.3, 19.2, 19.3
+   */
+  async getSyncErrors(filters?: {
+    syncType?: SyncType;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ id: string; entityType: string; entityId: string; syncType: string; errorMessage: string | null; retryCount: number; lastRetryAt: Date | null; createdAt: Date }[]> {
+    return prisma.syncLog.findMany({
+      where: {
+        success: false,
+        ...(filters?.syncType ? { syncType: filters.syncType } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: filters?.limit ?? 50,
+      skip: filters?.offset ?? 0,
+      select: {
+        id: true,
+        entityType: true,
+        entityId: true,
+        syncType: true,
+        errorMessage: true,
+        retryCount: true,
+        lastRetryAt: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  /**
    * Writes a SyncLog entry for a contact sync operation.
    */
   private async logSync(customerId: string, success: boolean, errorMessage?: string): Promise<void> {
@@ -420,6 +580,21 @@ export class XeroService {
         entityType: 'INVOICE',
         entityId: invoiceId,
         syncType: SyncType.INVOICE,
+        success,
+        errorMessage: errorMessage ?? null,
+      },
+    });
+  }
+
+  /**
+   * Writes a SyncLog entry for a payment sync operation.
+   */
+  private async logPaymentSync(paymentId: string, success: boolean, errorMessage?: string): Promise<void> {
+    await prisma.syncLog.create({
+      data: {
+        entityType: 'PAYMENT',
+        entityId: paymentId,
+        syncType: SyncType.PAYMENT,
         success,
         errorMessage: errorMessage ?? null,
       },

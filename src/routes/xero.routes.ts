@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { UserRole } from '@prisma/client';
+import { UserRole, SyncType } from '@prisma/client';
 import { xeroService } from '../services/xero.service';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 
@@ -182,6 +182,118 @@ router.post(
           message: 'Invoice synced successfully',
         },
       });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/xero/sync/payment/:paymentId
+ * Sync a payment to Xero (mark Xero invoice as paid) (admin only).
+ * Requirements: 12.1, 12.2, 12.4
+ */
+router.post(
+  '/sync/payment/:paymentId',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { paymentId } = req.params;
+      const result = await xeroService.syncPayment(paymentId);
+
+      if (!result.success) {
+        const isNotFound = result.error === 'Payment not found';
+        res.status(isNotFound ? 404 : 502).json({
+          success: false,
+          error: {
+            code: isNotFound ? 'NOT_FOUND' : 'XERO_SYNC_ERROR',
+            message: result.error ?? 'Payment sync failed',
+          },
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          xeroPaymentId: result.xeroPaymentId,
+          message: 'Payment synced successfully',
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/xero/sync/errors
+ * List failed sync log entries (admin only).
+ * Requirements: 10.3, 11.6, 12.3, 19.2, 19.3
+ */
+router.get(
+  '/sync/errors',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const syncType = req.query.syncType as SyncType | undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+      const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : undefined;
+
+      const errors = await xeroService.getSyncErrors({ syncType, limit, offset });
+      res.json({ success: true, data: errors });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/xero/sync/errors/:syncLogId/retry
+ * Retry a failed sync operation (admin only).
+ * Requirements: 10.3, 11.6, 12.3, 19.2, 19.3
+ */
+router.post(
+  '/sync/errors/:syncLogId/retry',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { syncLogId } = req.params;
+      const result = await xeroService.retrySync(syncLogId);
+
+      if (!result.success) {
+        res.status(502).json({
+          success: false,
+          error: {
+            code: 'XERO_SYNC_ERROR',
+            message: result.error ?? 'Retry failed',
+          },
+        });
+        return;
+      }
+
+      res.json({ success: true, data: { message: 'Sync retried successfully' } });
     } catch (error) {
       res.status(500).json({
         success: false,
