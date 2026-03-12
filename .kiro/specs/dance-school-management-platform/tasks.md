@@ -426,7 +426,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 7: Teacher Access Restrictions**
     - **Validates: Requirements 2.3, 7.7**
   
-  - [-] 19.4 Implement attendance marking
+  - [x] 19.4 Implement attendance marking
     - Create attendance marking endpoint
     - Record present/absent status with timestamp
     - Support private notes
