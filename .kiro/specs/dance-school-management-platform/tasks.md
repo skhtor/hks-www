@@ -642,7 +642,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle registration errors
     - _Requirements: 1.1_
 
-- [~] 31. Frontend - Customer portal
+- [x] 31. Frontend - Customer portal
   - [x] 31.1 Implement customer dashboard
     - Display enrolments
     - Show next classes
@@ -667,7 +667,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle payment success/failure
     - _Requirements: 6.1, 6.2, 6.5_
   
-  - [~] 31.5 Implement billing section
+  - [x] 31.5 Implement billing section
     - Display invoices
     - Show receipts
     - Download PDFs

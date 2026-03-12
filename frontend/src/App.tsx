@@ -12,6 +12,7 @@ import DancersPage from './pages/customer/DancersPage';
 import DancerFormPage from './pages/customer/DancerFormPage';
 import EnrolmentPage from './pages/customer/EnrolmentPage';
 import CheckoutPage from './pages/customer/CheckoutPage';
+import BillingPage from './pages/customer/BillingPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -37,6 +38,7 @@ export default function App() {
               <Route path="/dancers/:id/edit" element={<DancerFormPage />} />
               <Route path="/enrol" element={<EnrolmentPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/billing" element={<BillingPage />} />
             </Route>
           </Route>
         </Routes>
