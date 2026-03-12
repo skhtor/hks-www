@@ -643,7 +643,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 1.1_
 
 - [ ] 31. Frontend - Customer portal
-  - [-] 31.1 Implement customer dashboard
+  - [x] 31.1 Implement customer dashboard
     - Display enrolments
     - Show next classes
     - Display payment status
