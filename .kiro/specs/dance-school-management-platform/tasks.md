@@ -512,7 +512,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [-] 24. Reporting service
+- [x] 24. Reporting service
   - [x] 24.1 Implement enrolment reports
     - Create endpoint for active enrolments by class
     - Create endpoint for new enrolments this month
