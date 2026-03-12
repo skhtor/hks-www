@@ -513,22 +513,22 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
 
 
 - [ ] 24. Reporting service
-  - [-] 24.1 Implement enrolment reports
+  - [x] 24.1 Implement enrolment reports
     - Create endpoint for active enrolments by class
     - Create endpoint for new enrolments this month
     - _Requirements: 13.1, 13.5_
   
-  - [~] 24.2 Implement capacity reports
+  - [x] 24.2 Implement capacity reports
     - Create endpoint for capacity utilization by class
     - Calculate percentage filled
     - _Requirements: 13.2_
   
-  - [~] 24.3 Implement revenue reports
+  - [x] 24.3 Implement revenue reports
     - Create endpoint for revenue by month
     - Aggregate payment data
     - _Requirements: 13.3_
   
-  - [~] 24.4 Implement outstanding payments report
+  - [x] 24.4 Implement outstanding payments report
     - Create endpoint for overdue invoices
     - Include customer details
     - _Requirements: 13.4_
@@ -538,7 +538,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Calculate churn rate
     - _Requirements: 13.6_
   
-  - [~] 24.6 Implement report export
+  - [x] 24.6 Implement report export
     - Create CSV export functionality
     - Support all report types
     - _Requirements: 13.7_
@@ -549,7 +549,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 17.4_
 
 - [ ] 25. Multi-location support
-  - [~] 25.1 Implement location management
+  - [-] 25.1 Implement location management
     - Create location CRUD endpoints
     - Store name, address, contact details
     - _Requirements: 28.1_
