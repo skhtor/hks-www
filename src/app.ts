@@ -15,6 +15,7 @@ import paymentRoutes from './routes/payment.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import xeroRoutes from './routes/xero.routes';
 import notificationTemplateRoutes from './routes/notification-template.routes';
+import reportRoutes from './routes/report.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -88,6 +89,9 @@ export const createApp = (): Application => {
 
   // Notification template routes
   app.use('/api/notification-templates', notificationTemplateRoutes);
+
+  // Report routes
+  app.use('/api/reports', reportRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

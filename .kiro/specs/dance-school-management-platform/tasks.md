@@ -482,7 +482,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Validate template syntax
     - _Requirements: 23.1, 23.2, 23.3, 23.4_
 
-- [ ] 22. Notification service
+- [x] 22. Notification service
   - [x] 22.1 Set up email service integration
     - Integrate SendGrid or AWS SES
     - Create email sending service
@@ -513,7 +513,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
 
 
 - [ ] 24. Reporting service
-  - [~] 24.1 Implement enrolment reports
+  - [-] 24.1 Implement enrolment reports
     - Create endpoint for active enrolments by class
     - Create endpoint for new enrolments this month
     - _Requirements: 13.1, 13.5_
