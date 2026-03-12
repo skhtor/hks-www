@@ -575,7 +575,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 45: Inventory Constraint**
     - **Validates: Requirements 27.5**
   
-  - [-] 26.3 Implement merchandise purchase flow
+  - [x] 26.3 Implement merchandise purchase flow
     - Add merchandise to enrolment checkout
     - Create standalone shop endpoint
     - Include in invoice line items
