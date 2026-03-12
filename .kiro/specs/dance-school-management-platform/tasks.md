@@ -654,7 +654,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle profile updates
     - _Requirements: 1.3, 1.4, 1.5, 1.6_
   
-  - [~] 31.3 Implement enrolment flow
+  - [x] 31.3 Implement enrolment flow
     - Create class selection interface
     - Display fee breakdown
     - Show discount explanations
