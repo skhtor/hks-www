@@ -372,7 +372,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Use idempotency to prevent duplicates
     - _Requirements: 10.1, 10.2, 10.4, 10.6_
   
-  - [~] 17.3 Write property tests for contact sync
+  - [-] 17.3 Write property tests for contact sync
     - **Property 23: Contact Sync Idempotency**
     - **Property 24: Contact Email Uniqueness**
     - **Validates: Requirements 10.1, 10.4, 10.6**
