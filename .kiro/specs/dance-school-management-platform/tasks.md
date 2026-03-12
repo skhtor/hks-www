@@ -483,7 +483,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 23.1, 23.2, 23.3, 23.4_
 
 - [ ] 22. Notification service
-  - [-] 22.1 Set up email service integration
+  - [x] 22.1 Set up email service integration
     - Integrate SendGrid or AWS SES
     - Create email sending service
     - _Requirements: 14.1_
