@@ -588,7 +588,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Configure term dates and pricing
     - _Requirements: 8.7, 29.1_
   
-  - [-] 27.2 Implement term-based enrolment flow
+  - [x] 27.2 Implement term-based enrolment flow
     - Display monthly and term pricing options
     - Calculate term fees
     - Create term invoices
