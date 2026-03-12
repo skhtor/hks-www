@@ -377,7 +377,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 24: Contact Email Uniqueness**
     - **Validates: Requirements 10.1, 10.4, 10.6**
   
-  - [-] 17.4 Implement invoice synchronization
+  - [x] 17.4 Implement invoice synchronization
     - Create invoices in Xero with line items
     - Apply configured account codes and tax rates
     - Apply tracking categories
