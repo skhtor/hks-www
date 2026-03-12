@@ -115,6 +115,8 @@ router.get(
 );
 
 
+/**
+ * GET /api/teacher/classes/:classId/roll
  * - TEACHER role: can only view their assigned classes (Req 7.7)
  * - ADMIN role: can view any class roll
  * Requirements: 7.3, 7.4, 7.7
@@ -163,6 +165,27 @@ router.get(
       // TEACHER role: enforce assigned-class restriction
       const roll = await teacherService.getClassRoll(req.user!.userId, classId);
       res.json({ success: true, data: roll });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+);
+
+/**
+ * GET /api/teacher/classes/:classId/roll/export
+ * Export the class roll as a CSV file.
+ * Requirements: 7.6
+ */
+router.get(
+  '/classes/:classId/roll/export',
+  authorize(UserRole.TEACHER, UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { classId } = req.params;
+      const csv = await teacherService.exportClassRollCsv(req.user!.userId, classId);
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="class-roll-${classId}.csv"`);
+      res.send(csv);
     } catch (error) {
       handleError(error, res);
     }

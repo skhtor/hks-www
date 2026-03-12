@@ -287,6 +287,33 @@ export class TeacherService {
   }
 
   /**
+   * Exports the class roll as a CSV string.
+   * Requirements: 7.6
+   */
+  async exportClassRollCsv(teacherUserId: string, classId: string): Promise<string> {
+    const roll = await this.getClassRoll(teacherUserId, classId);
+
+    const escapeField = (value: string): string => {
+      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
+
+    const header = 'First Name,Last Name,Enrolment ID,Status';
+    const rows = roll.map((s) =>
+      [
+        escapeField(s.firstName),
+        escapeField(s.lastName),
+        escapeField(s.enrolmentId),
+        escapeField(s.enrolmentStatus),
+      ].join(',')
+    );
+
+    return [header, ...rows].join('\n');
+  }
+
+  /**
    * Marks attendance for a class on a given date.
    * Requirements: 17.1, 17.2, 17.3
    */
