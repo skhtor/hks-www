@@ -6,6 +6,42 @@ import { UserRole } from '@prisma/client';
 
 const router = Router();
 
+/**
+ * GET /api/cancellation-policies/public
+ * Returns the default active cancellation policy in a customer-friendly format.
+ * No authentication required.
+ * Requirements: 26.5
+ */
+router.get('/public', async (_req: Request, res: Response) => {
+  try {
+    const policy = await cancellationPolicyService.getDefaultPolicy();
+    if (!policy) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'No cancellation policy is currently available' },
+      });
+      return;
+    }
+    const noticePeriodDays = Number(policy.noticePeriodDays);
+    const refundPercentage = Number(policy.refundPercentage);
+    const description =
+      refundPercentage > 0
+        ? `Cancel ${noticePeriodDays} day${noticePeriodDays !== 1 ? 's' : ''} or more before your class for a ${refundPercentage}% refund`
+        : `Cancellations within ${noticePeriodDays} day${noticePeriodDays !== 1 ? 's' : ''} are not eligible for a refund`;
+    res.json({
+      success: true,
+      data: {
+        policyName: policy.name,
+        noticePeriodDays,
+        refundPercentage,
+        description,
+      },
+    });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
 router.use(authenticate);
 
 const createPolicySchema = z.object({

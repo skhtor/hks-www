@@ -612,7 +612,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Track credit usage
     - _Requirements: 26.4_
   
-  - [~] 28.4 Display cancellation policy
+  - [-] 28.4 Display cancellation policy
     - Show policy to customers before enrolment
     - _Requirements: 26.5_
 

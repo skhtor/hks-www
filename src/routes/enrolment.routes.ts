@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { enrolmentService } from '../services/enrolment.service';
+import { cancellationPolicyService } from '../services/cancellation-policy.service';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 import { UserRole, EnrolmentStatus, BillingType } from '@prisma/client';
 
@@ -111,6 +112,41 @@ router.get('/', authorize(UserRole.ADMIN), async (req: Request, res: Response) =
 
     const enrolments = await enrolmentService.listEnrolments(filters);
     res.json({ success: true, data: enrolments });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * GET /api/enrolments/policy
+ * Returns the cancellation policy summary relevant to a customer's enrolment decision.
+ * Requirements: 26.5
+ */
+router.get('/policy', async (_req: Request, res: Response) => {
+  try {
+    const policy = await cancellationPolicyService.getDefaultPolicy();
+    if (!policy) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: 'No cancellation policy is currently available' },
+      });
+      return;
+    }
+    const noticePeriodDays = Number(policy.noticePeriodDays);
+    const refundPercentage = Number(policy.refundPercentage);
+    const description =
+      refundPercentage > 0
+        ? `Cancel ${noticePeriodDays} day${noticePeriodDays !== 1 ? 's' : ''} or more before your class for a ${refundPercentage}% refund`
+        : `Cancellations within ${noticePeriodDays} day${noticePeriodDays !== 1 ? 's' : ''} are not eligible for a refund`;
+    res.json({
+      success: true,
+      data: {
+        policyName: policy.name,
+        noticePeriodDays,
+        refundPercentage,
+        description,
+      },
+    });
   } catch (error) {
     handleError(error, res);
   }
