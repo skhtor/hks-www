@@ -47,11 +47,12 @@ model Customer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user         UserAccount        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  household    Household          @relation(fields: [householdId], references: [id])
-  invoices     Invoice[]
-  payments     Payment[]
-  xeroContact  XeroContact?
+  user          UserAccount        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household     Household          @relation(fields: [householdId], references: [id])
+  invoices      Invoice[]
+  payments      Payment[]
+  subscriptions Subscription[]
+  xeroContact   XeroContact?
   notifications NotificationLog[]
 
   @@index([householdId])
@@ -313,6 +314,30 @@ enum PaymentStatus {
   FAILED
   REFUNDED
   PARTIALLY_REFUNDED
+}
+
+// Subscription / Recurring Payment
+model Subscription {
+  id                    String             @id @default(uuid())
+  customerId            String
+  stripeCustomerId      String             // Stripe Customer ID (token, not card data)
+  stripeSubscriptionId  String?            // Stripe Subscription ID once created
+  stripePaymentMethodId String             // Stripe PaymentMethod ID (token, not card data)
+  status                SubscriptionStatus @default(ACTIVE)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@map("subscription")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  INCOMPLETE
 }
 
 // Xero Integration

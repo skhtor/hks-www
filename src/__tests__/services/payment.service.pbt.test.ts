@@ -26,6 +26,21 @@ class MockGateway implements PaymentGateway {
   async createRefund(_id: string, _amountCents?: number) {
     return { id: `re_mock_${Date.now()}`, status: 'succeeded' };
   }
+  async createCustomer(_email: string, _name: string) {
+    return { id: `cus_mock_${Date.now()}` };
+  }
+  async attachPaymentMethod(_customerId: string, _paymentMethodId: string) {
+    // no-op in tests
+  }
+  async createSubscription(_customerId: string, _priceId: string, _paymentMethodId: string) {
+    return { id: `sub_mock_${Date.now()}`, status: 'active' };
+  }
+  async cancelSubscription(_subscriptionId: string) {
+    return { id: _subscriptionId, status: 'canceled' };
+  }
+  async updateDefaultPaymentMethod(_customerId: string, _paymentMethodId: string) {
+    // no-op in tests
+  }
 }
 
 const paymentService = new PaymentService(new MockGateway());

@@ -1,4 +1,4 @@
-import { PrismaClient, PaymentStatus, InvoiceStatus } from '@prisma/client';
+import { PrismaClient, PaymentStatus, InvoiceStatus, SubscriptionStatus } from '@prisma/client';
 import Stripe from 'stripe';
 
 export interface ReceiptLineItem {
@@ -31,6 +31,12 @@ export interface PaymentGateway {
   createPaymentIntent(amountCents: number, currency: string, metadata: Record<string, string>): Promise<{ id: string; clientSecret: string }>;
   confirmPayment(paymentIntentId: string): Promise<{ status: string }>;
   createRefund(paymentIntentId: string, amountCents?: number): Promise<{ id: string; status: string }>;
+  // Subscription / recurring payment methods
+  createCustomer(email: string, name: string): Promise<{ id: string }>;
+  attachPaymentMethod(customerId: string, paymentMethodId: string): Promise<void>;
+  createSubscription(customerId: string, priceId: string, paymentMethodId: string): Promise<{ id: string; status: string }>;
+  cancelSubscription(subscriptionId: string): Promise<{ id: string; status: string }>;
+  updateDefaultPaymentMethod(customerId: string, paymentMethodId: string): Promise<void>;
 }
 
 export class StripeGateway implements PaymentGateway {
@@ -60,6 +66,35 @@ export class StripeGateway implements PaymentGateway {
       ...(amountCents !== undefined && { amount: amountCents }),
     });
     return { id: refund.id, status: refund.status ?? 'succeeded' };
+  }
+
+  async createCustomer(email: string, name: string) {
+    const customer = await this.stripe.customers.create({ email, name });
+    return { id: customer.id };
+  }
+
+  async attachPaymentMethod(customerId: string, paymentMethodId: string) {
+    await this.stripe.paymentMethods.attach(paymentMethodId, { customer: customerId });
+  }
+
+  async createSubscription(customerId: string, priceId: string, paymentMethodId: string) {
+    const subscription = await this.stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      default_payment_method: paymentMethodId,
+    });
+    return { id: subscription.id, status: subscription.status };
+  }
+
+  async cancelSubscription(subscriptionId: string) {
+    const subscription = await this.stripe.subscriptions.cancel(subscriptionId);
+    return { id: subscription.id, status: subscription.status };
+  }
+
+  async updateDefaultPaymentMethod(customerId: string, paymentMethodId: string) {
+    await this.stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: paymentMethodId },
+    });
   }
 }
 
@@ -240,6 +275,108 @@ export class PaymentService {
       gstAmount: Number(invoice.gstAmount),
       total: Number(invoice.total),
     };
+  }
+
+  /**
+   * Sets up a recurring subscription for a customer.
+   * Creates a Stripe Customer, attaches the tokenized payment method, and stores
+   * only the Stripe IDs (never raw card data) in the database.
+   * Requirements: 6.6, 18.3
+   */
+  async createSubscription(customerId: string, paymentMethodId: string, priceId: string) {
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+      include: { user: true },
+    });
+    if (!customer) throw new Error('Customer not found');
+
+    // Create a Stripe Customer to hold the payment method securely
+    const stripeCustomer = await this.getGateway().createCustomer(
+      customer.user.email,
+      customer.name,
+    );
+
+    // Attach the tokenized payment method to the Stripe customer
+    await this.getGateway().attachPaymentMethod(stripeCustomer.id, paymentMethodId);
+
+    // Create the Stripe subscription
+    const stripeSubscription = await this.getGateway().createSubscription(
+      stripeCustomer.id,
+      priceId,
+      paymentMethodId,
+    );
+
+    // Persist only Stripe tokens — never raw card data (Req 18.3)
+    const subscription = await prisma.subscription.create({
+      data: {
+        customerId,
+        stripeCustomerId: stripeCustomer.id,
+        stripeSubscriptionId: stripeSubscription.id,
+        stripePaymentMethodId: paymentMethodId, // tokenized PM ID, not card number
+        status: SubscriptionStatus.ACTIVE,
+      },
+    });
+
+    return subscription;
+  }
+
+  /**
+   * Cancels an active subscription.
+   * Requirements: 6.6
+   */
+  async cancelSubscription(subscriptionId: string) {
+    const subscription = await prisma.subscription.findUnique({ where: { id: subscriptionId } });
+    if (!subscription) throw new Error('Subscription not found');
+    if (subscription.status === SubscriptionStatus.CANCELLED) {
+      throw new Error('Subscription is already cancelled');
+    }
+
+    if (subscription.stripeSubscriptionId) {
+      await this.getGateway().cancelSubscription(subscription.stripeSubscriptionId);
+    }
+
+    return prisma.subscription.update({
+      where: { id: subscriptionId },
+      data: { status: SubscriptionStatus.CANCELLED },
+    });
+  }
+
+  /**
+   * Updates the default payment method for a customer's subscription.
+   * Stores only the new tokenized payment method ID — never raw card data.
+   * Requirements: 6.6, 18.3
+   */
+  async updatePaymentMethod(subscriptionId: string, newPaymentMethodId: string) {
+    const subscription = await prisma.subscription.findUnique({ where: { id: subscriptionId } });
+    if (!subscription) throw new Error('Subscription not found');
+    if (subscription.status === SubscriptionStatus.CANCELLED) {
+      throw new Error('Cannot update payment method on a cancelled subscription');
+    }
+
+    // Attach new payment method to the Stripe customer
+    await this.getGateway().attachPaymentMethod(subscription.stripeCustomerId, newPaymentMethodId);
+
+    // Update the default payment method on the Stripe customer
+    await this.getGateway().updateDefaultPaymentMethod(
+      subscription.stripeCustomerId,
+      newPaymentMethodId,
+    );
+
+    // Persist only the new token — never raw card data (Req 18.3)
+    return prisma.subscription.update({
+      where: { id: subscriptionId },
+      data: { stripePaymentMethodId: newPaymentMethodId },
+    });
+  }
+
+  /**
+   * Lists all subscriptions for a customer.
+   */
+  async listSubscriptions(customerId: string) {
+    return prisma.subscription.findMany({
+      where: { customerId },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }
 

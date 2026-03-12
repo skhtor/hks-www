@@ -301,7 +301,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 15. Payment service
+- [x] 15. Payment service
   - [x] 15.1 Integrate Stripe payment gateway
     - Set up Stripe SDK
     - Implement payment intent creation
@@ -325,7 +325,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Send receipt emails automatically
     - _Requirements: 6.4_
   
-  - [~] 15.5 Implement subscription payments (optional)
+  - [x] 15.5 Implement subscription payments (optional)
     - Create subscription setup endpoint
     - Store payment methods securely (tokenized)
     - Handle recurring charges
