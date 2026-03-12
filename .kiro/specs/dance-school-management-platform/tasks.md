@@ -661,7 +661,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support multi-dancer enrolment
     - _Requirements: 4.1, 4.2, 4.3, 25.1, 25.2, 25.3_
   
-  - [~] 31.4 Implement payment checkout
+  - [x] 31.4 Implement payment checkout
     - Integrate Stripe Elements
     - Display fee breakdown
     - Handle payment success/failure
