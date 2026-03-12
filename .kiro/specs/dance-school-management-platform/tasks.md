@@ -543,7 +543,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support all report types
     - _Requirements: 13.7_
   
-  - [~] 24.7 Implement attendance reports (optional)
+  - [x] 24.7 Implement attendance reports (optional)
     - Create endpoint for attendance trends
     - Group by class or student
     - _Requirements: 17.4_

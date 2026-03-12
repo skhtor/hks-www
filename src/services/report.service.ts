@@ -1,4 +1,4 @@
-import { PrismaClient, EnrolmentStatus, InvoiceStatus, PaymentStatus } from '@prisma/client';
+import { PrismaClient, EnrolmentStatus, InvoiceStatus, PaymentStatus, AttendanceStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -58,6 +58,32 @@ export interface CancellationByMonth {
 
 export interface ChurnReport {
   byMonth: CancellationByMonth[];
+}
+
+export interface AttendanceByClass {
+  classId: string;
+  className: string;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  total: number;
+}
+
+export interface AttendanceByStudent {
+  dancerId: string;
+  dancerName: string;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  total: number;
+}
+
+export interface AttendanceReport {
+  groupBy: 'class' | 'student';
+  byClass?: AttendanceByClass[];
+  byStudent?: AttendanceByStudent[];
 }
 
 export class ReportService {
@@ -258,11 +284,85 @@ export class ReportService {
   }
 
   /**
+   * Returns attendance trends grouped by class or student.
+   * Requirements: 17.4
+   */
+  async getAttendanceReport(groupBy: 'class' | 'student' = 'class'): Promise<AttendanceReport> {
+    if (groupBy === 'class') {
+      const records = await prisma.attendanceRecord.findMany({
+        select: {
+          classId: true,
+          status: true,
+          class: { select: { name: true } },
+        },
+      });
+
+      const classMap = new Map<string, { className: string; present: number; absent: number; late: number; excused: number }>();
+      for (const r of records) {
+        const entry = classMap.get(r.classId) ?? { className: r.class.name, present: 0, absent: 0, late: 0, excused: 0 };
+        if (r.status === AttendanceStatus.PRESENT) entry.present++;
+        else if (r.status === AttendanceStatus.ABSENT) entry.absent++;
+        else if (r.status === AttendanceStatus.LATE) entry.late++;
+        else if (r.status === AttendanceStatus.EXCUSED) entry.excused++;
+        classMap.set(r.classId, entry);
+      }
+
+      const byClass: AttendanceByClass[] = Array.from(classMap.entries()).map(([classId, data]) => ({
+        classId,
+        className: data.className,
+        present: data.present,
+        absent: data.absent,
+        late: data.late,
+        excused: data.excused,
+        total: data.present + data.absent + data.late + data.excused,
+      }));
+
+      return { groupBy: 'class', byClass };
+    } else {
+      const records = await prisma.attendanceRecord.findMany({
+        select: {
+          dancerId: true,
+          status: true,
+          dancer: { select: { firstName: true, lastName: true } },
+        },
+      });
+
+      const dancerMap = new Map<string, { dancerName: string; present: number; absent: number; late: number; excused: number }>();
+      for (const r of records) {
+        const entry = dancerMap.get(r.dancerId) ?? {
+          dancerName: `${r.dancer.firstName} ${r.dancer.lastName}`,
+          present: 0,
+          absent: 0,
+          late: 0,
+          excused: 0,
+        };
+        if (r.status === AttendanceStatus.PRESENT) entry.present++;
+        else if (r.status === AttendanceStatus.ABSENT) entry.absent++;
+        else if (r.status === AttendanceStatus.LATE) entry.late++;
+        else if (r.status === AttendanceStatus.EXCUSED) entry.excused++;
+        dancerMap.set(r.dancerId, entry);
+      }
+
+      const byStudent: AttendanceByStudent[] = Array.from(dancerMap.entries()).map(([dancerId, data]) => ({
+        dancerId,
+        dancerName: data.dancerName,
+        present: data.present,
+        absent: data.absent,
+        late: data.late,
+        excused: data.excused,
+        total: data.present + data.absent + data.late + data.excused,
+      }));
+
+      return { groupBy: 'student', byStudent };
+    }
+  }
+
+  /**
    * Converts report data to CSV string.
    * Requirements: 13.7
    */
   exportToCsv(
-    _reportType: 'enrolment' | 'capacity' | 'revenue' | 'outstanding' | 'churn',
+    _reportType: 'enrolment' | 'capacity' | 'revenue' | 'outstanding' | 'churn' | 'attendance',
     data: unknown[]
   ): string {
     if (data.length === 0) return '';

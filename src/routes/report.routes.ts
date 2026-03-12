@@ -165,6 +165,40 @@ router.get('/churn/export', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * GET /api/reports/attendance
+ * Attendance trends grouped by class or student.
+ * Requirements: 17.4
+ */
+router.get('/attendance', async (req: Request, res: Response) => {
+  try {
+    const groupBy = req.query.groupBy === 'student' ? 'student' : 'class';
+    const report = await reportService.getAttendanceReport(groupBy);
+    res.json({ success: true, data: report });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * GET /api/reports/attendance/export
+ * CSV export of attendance report.
+ * Requirements: 17.4, 13.7
+ */
+router.get('/attendance/export', async (req: Request, res: Response) => {
+  try {
+    const groupBy = req.query.groupBy === 'student' ? 'student' : 'class';
+    const report = await reportService.getAttendanceReport(groupBy);
+    const rows = groupBy === 'class' ? (report.byClass ?? []) : (report.byStudent ?? []);
+    const csv = reportService.exportToCsv('attendance', rows);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="report-attendance-by-${groupBy}.csv"`);
+    res.send(csv);
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
 function handleError(error: unknown, res: Response): void {
   console.error('Report error:', error);
   res.status(500).json({
