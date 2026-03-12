@@ -405,7 +405,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Create admin UI for viewing and retrying errors
     - _Requirements: 10.3, 11.6, 12.3, 12.6, 19.2, 19.3_
 
-- [ ] 18. Checkpoint - Payments and Xero integration
+- [x] 18. Checkpoint - Payments and Xero integration
   - Ensure all tests pass, ask the user if questions arise.
 
 
