@@ -755,32 +755,32 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Test keyboard-only navigation
     - _Requirements: 20.1_
 
-- [~] 36. Security hardening
-  - [~] 36.1 Implement security headers
+- [x] 36. Security hardening
+  - [x] 36.1 Implement security headers
     - Add HSTS headers
     - Configure CORS properly
     - Add CSP headers
     - _Requirements: 18.2_
   
-  - [~] 36.2 Implement rate limiting
+  - [x] 36.2 Implement rate limiting
     - Add rate limiting middleware
     - Configure limits per endpoint type
     - _Requirements: Security best practices_
   
-  - [~] 36.3 Implement input validation and sanitization
+  - [x] 36.3 Implement input validation and sanitization
     - Validate all inputs server-side
     - Sanitize user-generated content
     - Use parameterized queries (already done with Prisma)
     - _Requirements: 18.2_
   
-  - [~] 36.4 Implement audit logging
+  - [x] 36.4 Implement audit logging
     - Log all admin actions
     - Log authentication events
     - Log payment transactions
     - Log Xero sync operations
     - _Requirements: 18.6_
   
-  - [~] 36.5 Write property test for audit logging
+  - [x] 36.5 Write property test for audit logging
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.6, 18.6**
 

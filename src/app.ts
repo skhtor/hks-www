@@ -2,7 +2,9 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 import { config } from './config/env';
+import { sanitizeInput, requestId } from './middleware/security.middleware';
 import authRoutes from './routes/auth.routes';
 import customerRoutes from './routes/customer.routes';
 import dancerRoutes from './routes/dancer.routes';
@@ -25,20 +27,68 @@ export const createApp = (): Application => {
   const app = express();
 
   // Security middleware
-  app.use(helmet());
-  app.use(cors());
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  }));
 
-  // Rate limiting
+  app.use(cors({
+    origin: config.env === 'production'
+      ? (process.env.ALLOWED_ORIGINS || '').split(',').filter(Boolean)
+      : true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  }));
+
+  // Request ID tracking
+  app.use(requestId);
+
+  // Response compression
+  app.use(compression());
+
+  // Rate limiting - strict for auth endpoints
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20,
+    message: 'Too many authentication attempts, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
   const limiter = rateLimit({
     windowMs: config.rateLimit.windowMs,
     max: config.rateLimit.maxRequests,
     message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
   });
+
+  app.use('/api/auth', authLimiter);
   app.use('/api/', limiter);
 
   // Body parsing middleware
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Input sanitization
+  app.use(sanitizeInput);
 
   // Health check endpoint
   app.get('/health', (_req: Request, res: Response) => {
