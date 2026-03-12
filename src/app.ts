@@ -13,6 +13,7 @@ import feeRoutes from './routes/fee.routes';
 import enrolmentRoutes from './routes/enrolment.routes';
 import paymentRoutes from './routes/payment.routes';
 import invoiceRoutes from './routes/invoice.routes';
+import xeroRoutes from './routes/xero.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -79,6 +80,9 @@ export const createApp = (): Application => {
 
   // Invoice routes
   app.use('/api/invoices', invoiceRoutes);
+
+  // Xero integration routes
+  app.use('/api/xero', xeroRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
