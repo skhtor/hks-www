@@ -462,6 +462,23 @@ enum NotificationType {
   TRIAL_FOLLOWUP
 }
 
+// Merchandise Management
+model MerchandiseItem {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  price         Decimal  @db.Decimal(10, 2)
+  stockQuantity Int      @default(0)
+  sku           String   @unique
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([sku])
+  @@index([isActive])
+  @@map("merchandise_item")
+}
+
 // Audit Logging
 model AuditLog {
   id         String   @id @default(uuid())

@@ -548,7 +548,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Group by class or student
     - _Requirements: 17.4_
 
-- [ ] 25. Multi-location support
+- [x] 25. Multi-location support
   - [x] 25.1 Implement location management
     - Create location CRUD endpoints
     - Store name, address, contact details
@@ -566,7 +566,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Validates: Requirements 28.3**
 
 - [ ] 26. Merchandise and uniform sales
-  - [~] 26.1 Implement merchandise management
+  - [-] 26.1 Implement merchandise management
     - Create merchandise item CRUD endpoints
     - Track inventory levels
     - _Requirements: 27.1, 27.5_

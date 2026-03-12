@@ -17,6 +17,7 @@ import xeroRoutes from './routes/xero.routes';
 import notificationTemplateRoutes from './routes/notification-template.routes';
 import reportRoutes from './routes/report.routes';
 import locationRoutes from './routes/location.routes';
+import merchandiseRoutes from './routes/merchandise.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -96,6 +97,9 @@ export const createApp = (): Application => {
 
   // Location routes
   app.use('/api/locations', locationRoutes);
+
+  // Merchandise routes
+  app.use('/api/merchandise', merchandiseRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
