@@ -14,6 +14,7 @@ import EnrolmentPage from './pages/customer/EnrolmentPage';
 import CheckoutPage from './pages/customer/CheckoutPage';
 import BillingPage from './pages/customer/BillingPage';
 import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
+import ClassRollPage from './pages/teacher/ClassRollPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/billing" element={<BillingPage />} />
               <Route path="/teacher/dashboard" element={<TeacherDashboardPage />} />
+              <Route path="/teacher/classes/:id/roll" element={<ClassRollPage />} />
             </Route>
           </Route>
         </Routes>

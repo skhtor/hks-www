@@ -679,7 +679,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Quick access to class rolls
     - _Requirements: 7.1_
   
-  - [~] 32.2 Implement class roll view
+  - [x] 32.2 Implement class roll view
     - Display enrolled students
     - Show class information
     - Export to CSV
