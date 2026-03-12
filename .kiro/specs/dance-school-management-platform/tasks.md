@@ -421,12 +421,12 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Enforce teacher can only view assigned classes
     - _Requirements: 7.3, 7.4, 7.7_
   
-  - [~] 19.3 Write property test for teacher class access
+  - [x] 19.3 Write property test for teacher class access
     - **Property 6: Teacher Class Visibility**
     - **Property 7: Teacher Access Restrictions**
     - **Validates: Requirements 2.3, 7.7**
   
-  - [~] 19.4 Implement attendance marking
+  - [-] 19.4 Implement attendance marking
     - Create attendance marking endpoint
     - Record present/absent status with timestamp
     - Support private notes

@@ -1,4 +1,4 @@
-import { PrismaClient, DayOfWeek } from '@prisma/client';
+import { PrismaClient, DayOfWeek, AttendanceStatus } from '@prisma/client';
 import { authService } from './auth.service';
 import { authorizationService } from './authorization.service';
 
@@ -56,6 +56,24 @@ export interface ClassRollStudent {
   enrolmentStatus: string;
   medicalNotes?: string;
   allergies?: string;
+}
+
+export interface AttendanceInput {
+  dancerId: string;
+  status: AttendanceStatus;
+  notes?: string;
+}
+
+export interface MarkAttendanceResult {
+  id: string;
+  enrolmentId: string;
+  classId: string;
+  dancerId: string;
+  classDate: Date;
+  status: AttendanceStatus;
+  notes: string | null;
+  markedAt: Date;
+  markedBy: string;
 }
 
 export class TeacherService {
@@ -265,6 +283,103 @@ export class TeacherService {
       }
 
       return student;
+    });
+  }
+
+  /**
+   * Marks attendance for a class on a given date.
+   * Requirements: 17.1, 17.2, 17.3
+   */
+  async markAttendance(
+    teacherUserId: string,
+    classId: string,
+    classDate: string,
+    records: AttendanceInput[]
+  ): Promise<MarkAttendanceResult[]> {
+    const teacher = await prisma.teacher.findUnique({ where: { userId: teacherUserId } });
+    if (!teacher) {
+      throw new Error('Teacher profile not found');
+    }
+
+    const hasAccess = await authorizationService.canTeacherAccessClass(teacher.id, classId);
+    if (!hasAccess) {
+      throw new Error('Teacher does not have access to this class');
+    }
+
+    const parsedDate = new Date(classDate);
+    const now = new Date();
+
+    const results: MarkAttendanceResult[] = [];
+
+    for (const record of records) {
+      // Find the active enrolment for this dancer in this class
+      const enrolment = await prisma.enrolment.findFirst({
+        where: { dancerId: record.dancerId, classId, status: 'ACTIVE' },
+      });
+
+      if (!enrolment) {
+        throw new Error(`No active enrolment found for dancer ${record.dancerId} in class ${classId}`);
+      }
+
+      const existing = await prisma.attendanceRecord.findFirst({
+        where: { enrolmentId: enrolment.id, classDate: parsedDate },
+      });
+
+      let attendance;
+      if (existing) {
+        attendance = await prisma.attendanceRecord.update({
+          where: { id: existing.id },
+          data: {
+            status: record.status,
+            notes: record.notes ?? null,
+            markedAt: now,
+            markedBy: teacher.id,
+          },
+        });
+      } else {
+        attendance = await prisma.attendanceRecord.create({
+          data: {
+            enrolmentId: enrolment.id,
+            classId,
+            dancerId: record.dancerId,
+            classDate: parsedDate,
+            status: record.status,
+            notes: record.notes ?? null,
+            markedAt: now,
+            markedBy: teacher.id,
+          },
+        });
+      }
+
+      results.push(attendance);
+    }
+
+    return results;
+  }
+
+  /**
+   * Gets attendance records for a class on a given date.
+   * Requirements: 17.1, 17.2
+   */
+  async getAttendance(
+    teacherUserId: string,
+    classId: string,
+    classDate: string
+  ): Promise<MarkAttendanceResult[]> {
+    const teacher = await prisma.teacher.findUnique({ where: { userId: teacherUserId } });
+    if (!teacher) {
+      throw new Error('Teacher profile not found');
+    }
+
+    const hasAccess = await authorizationService.canTeacherAccessClass(teacher.id, classId);
+    if (!hasAccess) {
+      throw new Error('Teacher does not have access to this class');
+    }
+
+    const parsedDate = new Date(classDate);
+
+    return prisma.attendanceRecord.findMany({
+      where: { classId, classDate: parsedDate },
     });
   }
 

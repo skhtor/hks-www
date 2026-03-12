@@ -54,9 +54,67 @@ router.get('/', authorize(UserRole.ADMIN), async (_req: Request, res: Response) 
   }
 });
 
+// Attendance validation schema
+const markAttendanceSchema = z.object({
+  classDate: z.string().min(1, 'classDate is required'),
+  records: z.array(
+    z.object({
+      dancerId: z.string().min(1, 'dancerId is required'),
+      status: z.enum(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED']),
+      notes: z.string().optional(),
+    })
+  ).min(1, 'At least one attendance record is required'),
+});
+
 /**
- * GET /api/teacher/classes/:classId/roll
- * Get the class roll (enrolled students) for a specific class.
+ * POST /api/teacher/classes/:classId/attendance
+ * Mark attendance for a class on a given date.
+ * Requirements: 17.1, 17.2, 17.3
+ */
+router.post(
+  '/classes/:classId/attendance',
+  authorize(UserRole.TEACHER, UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { classId } = req.params;
+      const { classDate, records } = markAttendanceSchema.parse(req.body);
+      const result = await teacherService.markAttendance(req.user!.userId, classId, classDate, records as any);
+      res.status(201).json({ success: true, data: result });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+);
+
+/**
+ * GET /api/teacher/classes/:classId/attendance
+ * Get attendance records for a class on a given date.
+ * Query param: classDate (ISO date string)
+ * Requirements: 17.1, 17.2
+ */
+router.get(
+  '/classes/:classId/attendance',
+  authorize(UserRole.TEACHER, UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { classId } = req.params;
+      const classDate = req.query.classDate as string;
+      if (!classDate) {
+        res.status(400).json({
+          success: false,
+          error: { code: 'VALIDATION_ERROR', message: 'classDate query parameter is required' },
+        });
+        return;
+      }
+      const records = await teacherService.getAttendance(req.user!.userId, classId, classDate);
+      res.json({ success: true, data: records });
+    } catch (error) {
+      handleError(error, res);
+    }
+  }
+);
+
+
  * - TEACHER role: can only view their assigned classes (Req 7.7)
  * - ADMIN role: can view any class roll
  * Requirements: 7.3, 7.4, 7.7
