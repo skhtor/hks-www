@@ -14,6 +14,7 @@ import enrolmentRoutes from './routes/enrolment.routes';
 import paymentRoutes from './routes/payment.routes';
 import invoiceRoutes from './routes/invoice.routes';
 import xeroRoutes from './routes/xero.routes';
+import notificationTemplateRoutes from './routes/notification-template.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -84,6 +85,9 @@ export const createApp = (): Application => {
 
   // Xero integration routes
   app.use('/api/xero', xeroRoutes);
+
+  // Notification template routes
+  app.use('/api/notification-templates', notificationTemplateRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {
