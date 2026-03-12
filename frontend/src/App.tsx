@@ -1,18 +1,22 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-function Home() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <h1 className="text-3xl font-bold text-gray-900">Dance School Management</h1>
-    </div>
-  );
-}
+import Layout from './components/Layout';
+import HomePage from './pages/HomePage';
+import TimetablePage from './pages/TimetablePage';
+import PricingPage from './pages/PricingPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route element={<Layout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/timetable" element={<TimetablePage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

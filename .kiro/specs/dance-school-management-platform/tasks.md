@@ -628,7 +628,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Set up API client with axios
     - _Requirements: Foundation for UI requirements_
   
-  - [~] 30.2 Implement public pages
+  - [-] 30.2 Implement public pages
     - Create home page
     - Create about/teachers page
     - Create timetable page with filters
