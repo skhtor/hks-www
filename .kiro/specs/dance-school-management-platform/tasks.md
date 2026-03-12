@@ -442,7 +442,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 7.6_
 
 - [ ] 20. Admin portal - class management
-  - [-] 20.1 Implement admin class CRUD UI endpoints
+  - [x] 20.1 Implement admin class CRUD UI endpoints
     - Create endpoints for class creation form
     - Implement class update and delete
     - Validate all required fields
