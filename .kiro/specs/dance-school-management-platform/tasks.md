@@ -602,7 +602,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Configure notice periods and refund percentages
     - _Requirements: 26.1_
   
-  - [-] 28.2 Implement refund calculation
+  - [x] 28.2 Implement refund calculation
     - Calculate refunds based on policy and effective date
     - Apply to cancellation flow
     - _Requirements: 26.2_
