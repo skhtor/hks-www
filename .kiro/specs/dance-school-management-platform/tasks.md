@@ -565,7 +565,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 46: Location Filtering**
     - **Validates: Requirements 28.3**
 
-- [ ] 26. Merchandise and uniform sales
+- [x] 26. Merchandise and uniform sales
   - [x] 26.1 Implement merchandise management
     - Create merchandise item CRUD endpoints
     - Track inventory levels
@@ -583,7 +583,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 27.1, 27.2, 27.3, 27.4_
 
 - [ ] 27. Term-based enrolment
-  - [~] 27.1 Implement term configuration
+  - [-] 27.1 Implement term configuration
     - Create term definition endpoints
     - Configure term dates and pricing
     - _Requirements: 8.7, 29.1_

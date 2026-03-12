@@ -18,6 +18,7 @@ import notificationTemplateRoutes from './routes/notification-template.routes';
 import reportRoutes from './routes/report.routes';
 import locationRoutes from './routes/location.routes';
 import merchandiseRoutes from './routes/merchandise.routes';
+import termRoutes from './routes/term.routes';
 
 export const createApp = (): Application => {
   const app = express();
@@ -100,6 +101,9 @@ export const createApp = (): Application => {
 
   // Merchandise routes
   app.use('/api/merchandise', merchandiseRoutes);
+
+  // Term routes
+  app.use('/api/terms', termRoutes);
 
   // 404 handler
   app.use((_req: Request, res: Response) => {

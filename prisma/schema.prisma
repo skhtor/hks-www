@@ -479,6 +479,22 @@ model MerchandiseItem {
   @@map("merchandise_item")
 }
 
+// Term Configuration
+model Term {
+  id                String   @id @default(uuid())
+  name              String
+  startDate         DateTime
+  endDate           DateTime
+  termFeeMultiplier Decimal? @db.Decimal(5, 4)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([startDate, endDate])
+  @@map("term")
+}
+
 // Audit Logging
 model AuditLog {
   id         String   @id @default(uuid())
