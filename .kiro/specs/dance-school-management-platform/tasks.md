@@ -620,7 +620,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 30. Frontend - Public website
+- [x] 30. Frontend - Public website
   - [x] 30.1 Set up React frontend project
     - Initialize React with TypeScript
     - Set up React Router
@@ -643,7 +643,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 1.1_
 
 - [ ] 31. Frontend - Customer portal
-  - [~] 31.1 Implement customer dashboard
+  - [-] 31.1 Implement customer dashboard
     - Display enrolments
     - Show next classes
     - Display payment status
