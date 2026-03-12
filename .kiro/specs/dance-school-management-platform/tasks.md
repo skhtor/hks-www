@@ -360,7 +360,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Send overdue notifications
     - _Requirements: 6.7, 6.8_
 
-- [-] 17. Xero integration service
+- [x] 17. Xero integration service
   - [x] 17.1 Set up Xero OAuth 2.0
     - Implement OAuth flow
     - Store and refresh access tokens securely
