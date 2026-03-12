@@ -105,6 +105,90 @@ router.get(
 );
 
 /**
+ * POST /api/xero/disconnect
+ * Disconnect from Xero by clearing stored tokens (admin only).
+ * Requirements: 22.4
+ */
+router.post(
+  '/disconnect',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  (_req: Request, res: Response) => {
+    try {
+      xeroService.disconnect();
+      res.json({ success: true, data: { message: 'Disconnected from Xero successfully' } });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'XERO_DISCONNECT_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to disconnect from Xero',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/xero/config
+ * Return Xero configuration including sync error count (admin only).
+ * Requirements: 22.4, 30.1
+ */
+router.get(
+  '/config',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  async (_req: Request, res: Response) => {
+    try {
+      const status = xeroService.getStatus();
+      const syncErrors = await xeroService.getSyncErrors();
+      res.json({
+        success: true,
+        data: {
+          connected: status.connected,
+          tenantId: status.tenantId,
+          tokenExpiry: status.tokenExpiry,
+          syncErrorCount: syncErrors.length,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'XERO_CONFIG_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to retrieve Xero configuration',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/xero/test-connection
+ * Test the Xero connection (admin only).
+ * Requirements: 30.1
+ */
+router.post(
+  '/test-connection',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  async (_req: Request, res: Response) => {
+    try {
+      const result = await xeroService.testConnection();
+      res.json({ success: true, data: result });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'XERO_TEST_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to test Xero connection',
+        },
+      });
+    }
+  }
+);
+
+/**
  * POST /api/xero/sync/contact/:customerId
  * Sync a customer to Xero as a contact (admin only).
  * Requirements: 10.1, 10.2, 10.4, 10.6

@@ -132,6 +132,35 @@ export class XeroService {
   }
 
   /**
+   * Disconnects from Xero by clearing the in-memory token store.
+   * Requirements: 22.4
+   */
+  disconnect(): void {
+    tokenStore.accessToken = null;
+    tokenStore.refreshToken = null;
+    tokenStore.tokenExpiry = null;
+    tokenStore.tenantId = null;
+  }
+
+  /**
+   * Tests the Xero connection by attempting to fetch tenant info.
+   * Requirements: 30.1
+   */
+  async testConnection(): Promise<{ success: boolean; message: string }> {
+    try {
+      const client = await this.getClient();
+      const tenants = await client.updateTenants();
+      if (tenants && tenants.length > 0) {
+        return { success: true, message: `Connected to Xero tenant: ${tenants[0].tenantName ?? tenants[0].tenantId}` };
+      }
+      return { success: true, message: 'Connected to Xero (no tenants found)' };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to connect to Xero';
+      return { success: false, message };
+    }
+  }
+
+  /**
    * Synchronizes a customer to Xero as a contact.
    * - If a XeroContact record already exists, updates the Xero contact.
    * - If not, searches Xero by email first to avoid duplicates (Req 10.6).

@@ -470,7 +470,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support all discount types
     - _Requirements: 22.3_
   
-  - [~] 21.3 Implement Xero configuration UI
+  - [-] 21.3 Implement Xero configuration UI
     - Create endpoints for Xero settings
     - Test connection endpoint
     - Display sync status
