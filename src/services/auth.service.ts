@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { PrismaClient, UserRole } from '@prisma/client';
+import speakeasy from 'speakeasy';
 import { config } from '../config/env';
 
 const prisma = new PrismaClient();
@@ -14,17 +15,29 @@ export interface RegisterInput {
 export interface LoginInput {
   email: string;
   password: string;
+  totpCode?: string;
 }
 
 export interface AuthToken {
   accessToken: string;
   refreshToken: string;
   expiresIn: number;
+  mfaRequired?: boolean;
+  mfaToken?: string;
   user: {
     id: string;
     email: string;
     role: UserRole;
   };
+}
+
+export interface MfaSetupResult {
+  secret: string;
+  otpauthUrl: string;
+}
+
+export interface MfaVerifyResult {
+  success: boolean;
 }
 
 export interface JWTPayload {
@@ -148,9 +161,11 @@ export class AuthService {
 
   /**
    * Authenticates a user with email and password
+   * For staff accounts (TEACHER/ADMIN) with MFA enabled, requires TOTP code
+   * Requirements: 1.8, 18.7
    */
   async login(input: LoginInput): Promise<AuthToken> {
-    const { email, password } = input;
+    const { email, password, totpCode } = input;
 
     // Find user by email
     const user = await prisma.userAccount.findUnique({
@@ -168,6 +183,46 @@ export class AuthService {
       throw new Error('Invalid credentials');
     }
 
+    // Check MFA requirement for staff accounts (TEACHER/ADMIN)
+    const isStaff = user.role === UserRole.TEACHER || user.role === UserRole.ADMIN;
+    if (isStaff && user.mfaEnabled) {
+      if (!totpCode) {
+        // Return a partial response indicating MFA is required
+        // Use a short-lived MFA token to identify the pending session
+        const mfaToken = jwt.sign(
+          { userId: user.id, type: 'mfa_pending' },
+          config.jwt.secret,
+          { expiresIn: '5m' } as SignOptions
+        );
+        return {
+          accessToken: '',
+          refreshToken: '',
+          expiresIn: 0,
+          mfaRequired: true,
+          mfaToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+          },
+        };
+      }
+
+      // Verify TOTP code
+      if (!user.mfaSecret) {
+        throw new Error('MFA configuration error');
+      }
+      const isValidTotp = speakeasy.totp.verify({
+        secret: user.mfaSecret,
+        encoding: 'base32',
+        token: totpCode,
+        window: 1,
+      });
+      if (!isValidTotp) {
+        throw new Error('Invalid MFA code');
+      }
+    }
+
     // Generate tokens
     const payload: JWTPayload = {
       userId: user.id,
@@ -177,6 +232,65 @@ export class AuthService {
 
     const { accessToken, refreshToken } = this.generateTokens(payload);
 
+    const expiresIn = this.parseExpiryToSeconds(config.jwt.expiresIn);
+
+    return {
+      accessToken,
+      refreshToken,
+      expiresIn,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    };
+  }
+
+  /**
+   * Completes MFA login using a pending MFA token and TOTP code
+   * Requirements: 1.8, 18.7
+   */
+  async completeMfaLogin(mfaToken: string, totpCode: string): Promise<AuthToken> {
+    let decoded: any;
+    try {
+      decoded = jwt.verify(mfaToken, config.jwt.secret) as any;
+    } catch {
+      throw new Error('Invalid or expired MFA token');
+    }
+
+    if (decoded.type !== 'mfa_pending') {
+      throw new Error('Invalid MFA token');
+    }
+
+    const user = await prisma.userAccount.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!user.mfaEnabled || !user.mfaSecret) {
+      throw new Error('MFA not enabled for this account');
+    }
+
+    const isValidTotp = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token: totpCode,
+      window: 1,
+    });
+    if (!isValidTotp) {
+      throw new Error('Invalid MFA code');
+    }
+
+    const payload: JWTPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const { accessToken, refreshToken } = this.generateTokens(payload);
     const expiresIn = this.parseExpiryToSeconds(config.jwt.expiresIn);
 
     return {
@@ -363,6 +477,113 @@ export class AuthService {
       where: { id: userId },
       data: { passwordHash },
     });
+  }
+
+  /**
+   * Initiates MFA setup by generating a TOTP secret
+   * Returns the secret and otpauth URL for QR code generation
+   * Requirements: 1.8, 18.7
+   */
+  async initiateMfaSetup(userId: string): Promise<MfaSetupResult> {
+    const user = await prisma.userAccount.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const secretObj = speakeasy.generateSecret({
+      name: `DanceSchool:${user.email}`,
+      issuer: 'DanceSchool',
+    });
+    const secret = secretObj.base32;
+    const otpauthUrl = secretObj.otpauth_url ?? speakeasy.otpauthURL({
+      secret,
+      label: user.email,
+      issuer: 'DanceSchool',
+      encoding: 'base32',
+    });
+
+    // Store the secret temporarily (not yet enabled until verified)
+    await prisma.userAccount.update({
+      where: { id: userId },
+      data: { mfaSecret: secret },
+    });
+
+    return { secret, otpauthUrl };
+  }
+
+  /**
+   * Verifies a TOTP code and enables MFA for the user
+   * Requirements: 1.8, 18.7
+   */
+  async verifyAndEnableMfa(userId: string, totpCode: string): Promise<MfaVerifyResult> {
+    const user = await prisma.userAccount.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!user.mfaSecret) {
+      throw new Error('MFA setup not initiated. Call initiateMfaSetup first.');
+    }
+
+    const isValid = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token: totpCode,
+      window: 1,
+    });
+
+    if (!isValid) {
+      throw new Error('Invalid TOTP code');
+    }
+
+    await prisma.userAccount.update({
+      where: { id: userId },
+      data: { mfaEnabled: true },
+    });
+
+    return { success: true };
+  }
+
+  /**
+   * Disables MFA for a user after verifying their TOTP code
+   * Requirements: 1.8, 18.7
+   */
+  async disableMfa(userId: string, totpCode: string): Promise<MfaVerifyResult> {
+    const user = await prisma.userAccount.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!user.mfaEnabled || !user.mfaSecret) {
+      throw new Error('MFA is not enabled for this account');
+    }
+
+    const isValid = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token: totpCode,
+      window: 1,
+    });
+
+    if (!isValid) {
+      throw new Error('Invalid TOTP code');
+    }
+
+    await prisma.userAccount.update({
+      where: { id: userId },
+      data: { mfaEnabled: false, mfaSecret: null },
+    });
+
+    return { success: true };
   }
 }
 

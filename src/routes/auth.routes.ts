@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authService } from '../services/auth.service';
 import { UserRole } from '@prisma/client';
+import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -33,6 +34,15 @@ const passwordResetSchema = z.object({
 const changePasswordSchema = z.object({
   oldPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string().min(1, 'New password is required'),
+});
+
+const mfaVerifySchema = z.object({
+  totpCode: z.string().length(6, 'TOTP code must be 6 digits'),
+});
+
+const mfaLoginSchema = z.object({
+  mfaToken: z.string().min(1, 'MFA token is required'),
+  totpCode: z.string().length(6, 'TOTP code must be 6 digits'),
 });
 
 /**
@@ -388,6 +398,189 @@ router.post('/change-password', async (req: Request, res: Response) => {
         code: 'INTERNAL_ERROR',
         message: 'An error occurred during password change',
       },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/setup
+ * Initiate MFA setup - generates TOTP secret and otpauth URL
+ * Requires authentication. Requirements: 1.8, 18.7
+ */
+router.post('/mfa/setup', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const result = await authService.initiateMfaSetup(userId);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'User not found') {
+      return res.status(404).json({
+        success: false,
+        error: { code: 'USER_NOT_FOUND', message: error.message },
+      });
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'An error occurred during MFA setup' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/verify
+ * Verify TOTP code and enable MFA
+ * Requires authentication. Requirements: 1.8, 18.7
+ */
+router.post('/mfa/verify', authenticate, async (req: Request, res: Response) => {
+  try {
+    const validatedData = mfaVerifySchema.parse(req.body);
+    const userId = req.user!.userId;
+
+    const result = await authService.verifyAndEnableMfa(userId, validatedData.totpCode);
+
+    res.status(200).json({
+      success: true,
+      data: { message: 'MFA has been enabled successfully', ...result },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+    if (error instanceof Error) {
+      if (error.message === 'Invalid TOTP code') {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_TOTP', message: error.message },
+        });
+      }
+      if (error.message.includes('not initiated')) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'MFA_NOT_INITIATED', message: error.message },
+        });
+      }
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'An error occurred during MFA verification' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/disable
+ * Disable MFA after verifying TOTP code
+ * Requires authentication. Requirements: 1.8, 18.7
+ */
+router.post('/mfa/disable', authenticate, async (req: Request, res: Response) => {
+  try {
+    const validatedData = mfaVerifySchema.parse(req.body);
+    const userId = req.user!.userId;
+
+    const result = await authService.disableMfa(userId, validatedData.totpCode);
+
+    res.status(200).json({
+      success: true,
+      data: { message: 'MFA has been disabled successfully', ...result },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+    if (error instanceof Error) {
+      if (error.message === 'Invalid TOTP code') {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'INVALID_TOTP', message: error.message },
+        });
+      }
+      if (error.message.includes('not enabled')) {
+        return res.status(400).json({
+          success: false,
+          error: { code: 'MFA_NOT_ENABLED', message: error.message },
+        });
+      }
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'An error occurred while disabling MFA' },
+    });
+  }
+});
+
+/**
+ * POST /api/auth/mfa/login
+ * Complete MFA login using pending MFA token and TOTP code
+ * Requirements: 1.8, 18.7
+ */
+router.post('/mfa/login', async (req: Request, res: Response) => {
+  try {
+    const validatedData = mfaLoginSchema.parse(req.body);
+
+    const result = await authService.completeMfaLogin(
+      validatedData.mfaToken,
+      validatedData.totpCode
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors.reduce((acc, err) => {
+            acc[err.path.join('.')] = err.message;
+            return acc;
+          }, {} as Record<string, string>),
+        },
+      });
+    }
+    if (error instanceof Error) {
+      if (error.message === 'Invalid MFA code') {
+        return res.status(401).json({
+          success: false,
+          error: { code: 'INVALID_MFA_CODE', message: error.message },
+        });
+      }
+      if (error.message.includes('Invalid or expired')) {
+        return res.status(401).json({
+          success: false,
+          error: { code: 'INVALID_TOKEN', message: error.message },
+        });
+      }
+    }
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'An error occurred during MFA login' },
     });
   }
 });
