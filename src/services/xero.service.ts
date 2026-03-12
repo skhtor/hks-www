@@ -602,6 +602,40 @@ export class XeroService {
   }
 
   /**
+   * Retries a failed sync with exponential backoff.
+   * Attempts up to maxRetries times, doubling the delay each attempt (capped at maxDelay).
+   * Updates retryCount and lastRetryAt in SyncLog on each attempt.
+   * Requirements: 10.3, 11.6, 12.3, 12.6, 19.2, 19.3
+   */
+  async retrySyncWithBackoff(
+    syncLogId: string,
+    options: { maxRetries?: number; initialDelayMs?: number; maxDelayMs?: number } = {}
+  ): Promise<{ success: boolean; attempts: number; error?: string }> {
+    const maxRetries = options.maxRetries ?? 5;
+    const initialDelay = options.initialDelayMs ?? 1000;
+    const maxDelay = options.maxDelayMs ?? 60000;
+
+    let delay = initialDelay;
+    let lastError: string | undefined;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const result = await this.retrySync(syncLogId);
+      if (result.success) {
+        return { success: true, attempts: attempt };
+      }
+
+      lastError = result.error;
+
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        delay = Math.min(delay * 2, maxDelay);
+      }
+    }
+
+    return { success: false, attempts: maxRetries, error: lastError };
+  }
+
+  /**
    * Stores token data from a Xero token set response.
    */
   private storeTokenSet(tokenSet: Record<string, unknown>): void {

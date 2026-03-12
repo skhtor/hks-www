@@ -449,11 +449,6 @@ const xeroPaymentIdArb = fc.uuid();
 /** Builds a full payment amount (not partial) */
 const fullPaymentAmountArb = fc.integer({ min: 50, max: 5000 }).map((n) => n);
 
-/** Builds a partial payment amount given a total */
-function partialAmountArb(total: number) {
-  return fc.integer({ min: 1, max: total - 1 });
-}
-
 interface MockPayment {
   id: string;
   invoiceId: string;
