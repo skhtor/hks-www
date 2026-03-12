@@ -549,7 +549,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 17.4_
 
 - [ ] 25. Multi-location support
-  - [-] 25.1 Implement location management
+  - [x] 25.1 Implement location management
     - Create location CRUD endpoints
     - Store name, address, contact details
     - _Requirements: 28.1_
