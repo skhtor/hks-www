@@ -432,7 +432,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support private notes
     - _Requirements: 17.1, 17.2, 17.3_
   
-  - [~] 19.5 Write property test for attendance records
+  - [-] 19.5 Write property test for attendance records
     - **Property 33: Attendance Record Persistence**
     - **Validates: Requirements 17.2**
   
