@@ -28,6 +28,18 @@ const adjustStockSchema = z.object({
   quantity: z.number().int().positive('Quantity must be a positive integer'),
 });
 
+const purchaseSchema = z.object({
+  customerId: z.string().uuid('customerId must be a valid UUID'),
+  items: z
+    .array(
+      z.object({
+        merchandiseItemId: z.string().uuid('merchandiseItemId must be a valid UUID'),
+        quantity: z.number().int().positive('Quantity must be a positive integer'),
+      })
+    )
+    .min(1, 'At least one item is required'),
+});
+
 /**
  * POST /api/merchandise
  * Create a merchandise item (admin only).
@@ -38,6 +50,23 @@ router.post('/', authenticate, authorize(UserRole.ADMIN), async (req: Request, r
     const data = createItemSchema.parse(req.body);
     const item = await merchandiseService.createItem(data);
     res.status(201).json({ success: true, data: item });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * POST /api/merchandise/purchase
+ * Purchase merchandise items (standalone shop endpoint).
+ * Accepts { customerId, items: [{merchandiseItemId, quantity}] }
+ * Decrements stock, creates an invoice with line items, and triggers Xero sync.
+ * Requirements: 27.1, 27.2, 27.3, 27.4
+ */
+router.post('/purchase', authenticate, async (req: Request, res: Response) => {
+  try {
+    const data = purchaseSchema.parse(req.body);
+    const result = await merchandiseService.purchaseMerchandise(data.customerId, data.items);
+    res.status(201).json({ success: true, data: result });
   } catch (error) {
     handleError(error, res);
   }
@@ -151,14 +180,6 @@ function handleError(error: unknown, res: Response): void {
   }
 
   if (error instanceof Error) {
-    if (error.message === 'Merchandise item not found') {
-      res.status(404).json({
-        success: false,
-        error: { code: 'NOT_FOUND', message: error.message },
-      });
-      return;
-    }
-
     if (error.message === 'SKU already exists') {
       res.status(409).json({
         success: false,
@@ -167,10 +188,37 @@ function handleError(error: unknown, res: Response): void {
       return;
     }
 
-    if (error.message === 'Insufficient stock') {
+    if (
+      error.message === 'Merchandise item not found' ||
+      error.message.startsWith('Merchandise item not found:')
+    ) {
+      res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: error.message },
+      });
+      return;
+    }
+
+    if (error.message === 'Customer not found') {
+      res.status(404).json({
+        success: false,
+        error: { code: 'NOT_FOUND', message: error.message },
+      });
+      return;
+    }
+
+    if (error.message === 'Insufficient stock' || error.message.startsWith('Insufficient stock for item:')) {
       res.status(422).json({
         success: false,
         error: { code: 'INSUFFICIENT_STOCK', message: error.message },
+      });
+      return;
+    }
+
+    if (error.message.startsWith('Merchandise item is not available:')) {
+      res.status(422).json({
+        success: false,
+        error: { code: 'ITEM_UNAVAILABLE', message: error.message },
       });
       return;
     }

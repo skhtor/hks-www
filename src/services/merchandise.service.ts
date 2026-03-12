@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, InvoiceStatus } from '@prisma/client';
+import { xeroService } from './xero.service';
 
 const prisma = new PrismaClient();
 
@@ -139,6 +140,94 @@ export class MerchandiseService {
       where: { id },
       data: { stockQuantity: { increment: quantity } },
     });
+  }
+
+  /**
+   * Purchases merchandise items for a customer.
+   * - Validates stock availability for all items
+   * - Decrements stock for each item
+   * - Creates an invoice with merchandise line items
+   * - Triggers Xero sync
+   * Requirements: 27.1, 27.2, 27.3, 27.4
+   */
+  async purchaseMerchandise(
+    customerId: string,
+    items: Array<{ merchandiseItemId: string; quantity: number }>
+  ) {
+    if (!items || items.length === 0) {
+      throw new Error('At least one item is required');
+    }
+
+    // Validate customer exists
+    const customer = await prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) {
+      throw new Error('Customer not found');
+    }
+
+    // Fetch all merchandise items and validate stock
+    const resolvedItems = await Promise.all(
+      items.map(async ({ merchandiseItemId, quantity }) => {
+        const item = await prisma.merchandiseItem.findUnique({ where: { id: merchandiseItemId } });
+        if (!item) {
+          throw new Error(`Merchandise item not found: ${merchandiseItemId}`);
+        }
+        if (!item.isActive) {
+          throw new Error(`Merchandise item is not available: ${item.name}`);
+        }
+        if (item.stockQuantity < quantity) {
+          throw new Error(`Insufficient stock for item: ${item.name}`);
+        }
+        return { item, quantity };
+      })
+    );
+
+    // Decrement stock for each item
+    for (const { item, quantity } of resolvedItems) {
+      await prisma.merchandiseItem.update({
+        where: { id: item.id },
+        data: { stockQuantity: { decrement: quantity } },
+      });
+    }
+
+    // Build invoice line items
+    const lineItems = resolvedItems.map(({ item, quantity }) => ({
+      description: `${item.name} (x${quantity})`,
+      quantity,
+      unitAmount: Number(item.price),
+      amount: Number(item.price) * quantity,
+      type: 'MERCHANDISE',
+      merchandiseItemId: item.id,
+      sku: item.sku,
+    }));
+
+    const subtotal = lineItems.reduce((sum, li) => sum + li.amount, 0);
+    const gstAmount = Math.round(subtotal * 0.1 * 100) / 100;
+    const total = Math.round((subtotal + gstAmount) * 100) / 100;
+
+    const idempotencyKey = `merch-${customerId}-${Date.now()}`;
+    const dueDate = new Date();
+
+    const invoice = await prisma.invoice.create({
+      data: {
+        customerId,
+        householdId: customer.householdId,
+        invoiceNumber: idempotencyKey,
+        subtotal,
+        discountAmount: 0,
+        gstAmount,
+        total,
+        status: InvoiceStatus.DUE,
+        dueDate,
+        lineItems: lineItems as unknown as object,
+      },
+    });
+
+    // Trigger Xero sync (non-blocking — errors are logged internally)
+    xeroService.syncInvoice(invoice.id).catch(() => {
+      // Sync errors are logged by xeroService; don't fail the purchase
+    });
+
+    return { invoice, lineItems };
   }
 }
 
