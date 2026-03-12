@@ -493,7 +493,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Implement variable substitution
     - _Requirements: 23.4_
   
-  - [~] 22.3 Implement automated notifications
+  - [x] 22.3 Implement automated notifications
     - Send payment confirmation emails
     - Send payment reminder emails (configurable)
     - Send overdue notifications
