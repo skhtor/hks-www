@@ -22,6 +22,9 @@ const envSchema = z.object({
   BCRYPT_ROUNDS: z.string().default('10'),
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().default('100'),
+
+  EMAIL_SERVICE_API_KEY: z.string().optional(),
+  EMAIL_FROM_ADDRESS: z.string().optional().default('noreply@danceschool.com'),
 });
 
 const parseEnv = () => {
@@ -70,5 +73,10 @@ export const config = {
   rateLimit: {
     windowMs: parseInt(env.RATE_LIMIT_WINDOW_MS, 10),
     maxRequests: parseInt(env.RATE_LIMIT_MAX_REQUESTS, 10),
+  },
+
+  email: {
+    apiKey: env.EMAIL_SERVICE_API_KEY,
+    fromAddress: env.EMAIL_FROM_ADDRESS,
   },
 };
