@@ -621,7 +621,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
 
 
 - [ ] 30. Frontend - Public website
-  - [-] 30.1 Set up React frontend project
+  - [x] 30.1 Set up React frontend project
     - Initialize React with TypeScript
     - Set up React Router
     - Configure Tailwind CSS
