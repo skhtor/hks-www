@@ -454,7 +454,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Implement cancel enrolment with refund calculation
     - _Requirements: 9.1, 9.2, 9.5_
   
-  - [-] 20.3 Implement substitute teacher assignment
+  - [x] 20.3 Implement substitute teacher assignment
     - Create endpoint to assign substitute for specific date
     - Notify enrolled customers of change
     - _Requirements: 24.3_
