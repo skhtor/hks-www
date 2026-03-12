@@ -554,7 +554,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Store name, address, contact details
     - _Requirements: 28.1_
   
-  - [-] 25.2 Implement location-specific features
+  - [x] 25.2 Implement location-specific features
     - Require location assignment for classes
     - Filter timetable by location
     - Support location-specific pricing rules
