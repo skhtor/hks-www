@@ -616,7 +616,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Show policy to customers before enrolment
     - _Requirements: 26.5_
 
-- [~] 29. Checkpoint - Advanced features
+- [x] 29. Checkpoint - Advanced features
   - Ensure all tests pass, ask the user if questions arise.
 
 
