@@ -596,7 +596,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Prevent mid-term cancellations (configurable)
     - _Requirements: 29.1, 29.2, 29.3, 29.4, 29.5_
 
-- [~] 28. Cancellation and refund policies
+- [x] 28. Cancellation and refund policies
   - [x] 28.1 Implement policy configuration
     - Create endpoints for cancellation policy settings
     - Configure notice periods and refund percentages
@@ -607,7 +607,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Apply to cancellation flow
     - _Requirements: 26.2_
   
-  - [ ] 28.3 Implement make-up class credits (optional)
+  - [ ]* 28.3 Implement make-up class credits (optional)
     - Create endpoint to issue credits
     - Track credit usage
     - _Requirements: 26.4_
