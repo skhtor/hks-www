@@ -571,7 +571,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Track inventory levels
     - _Requirements: 27.1, 27.5_
   
-  - [-] 26.2 Write property test for inventory constraints
+  - [x] 26.2 Write property test for inventory constraints
     - **Property 45: Inventory Constraint**
     - **Validates: Requirements 27.5**
   
