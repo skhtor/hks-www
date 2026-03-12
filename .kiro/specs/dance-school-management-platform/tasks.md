@@ -465,7 +465,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support per-class, tiered, and term-based rules
     - _Requirements: 22.1, 22.2_
   
-  - [~] 21.2 Implement discount rule configuration
+  - [x] 21.2 Implement discount rule configuration
     - Create endpoints for discount rule CRUD
     - Support all discount types
     - _Requirements: 22.3_
