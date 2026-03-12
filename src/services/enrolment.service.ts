@@ -329,6 +329,56 @@ export class EnrolmentService {
     });
   }
 
+  /**
+   * Calculates a refund preview for an enrolment cancellation.
+   * Placeholder policy until full cancellation policy service is built (task 28):
+   *   - 100% refund if cancelled 14+ days before effectiveDate
+   *   - 50% refund if 7–13 days before effectiveDate
+   *   - 0% refund if less than 7 days before effectiveDate
+   * Requirements: 9.1, 9.2, 9.5
+   */
+  async getRefundPreview(enrolmentId: string, effectiveDate: Date) {
+    const enrolment = await prisma.enrolment.findUnique({
+      where: { id: enrolmentId },
+      include: { class: true },
+    });
+
+    if (!enrolment) {
+      throw new Error('Enrolment not found');
+    }
+
+    const now = new Date();
+    const daysUntilEffective = Math.floor(
+      (effectiveDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    let refundPercentage: number;
+    let policy: string;
+
+    if (daysUntilEffective >= 14) {
+      refundPercentage = 100;
+      policy = 'Full refund: cancellation 14+ days before effective date';
+    } else if (daysUntilEffective >= 7) {
+      refundPercentage = 50;
+      policy = 'Partial refund: cancellation 7–13 days before effective date';
+    } else {
+      refundPercentage = 0;
+      policy = 'No refund: cancellation less than 7 days before effective date';
+    }
+
+    // Base amount is 0 as a placeholder — full fee calculation requires
+    // the pricing rule service (to be integrated in task 28)
+    const baseAmount = 0;
+    const refundAmount = (baseAmount * refundPercentage) / 100;
+
+    return {
+      enrolmentId,
+      effectiveDate,
+      refundAmount,
+      refundPercentage,
+      policy,
+    };
+  }
 }
 
 export const enrolmentService = new EnrolmentService();

@@ -90,6 +90,25 @@ router.get('/', authorize(UserRole.ADMIN), async (req: Request, res: Response) =
 });
 
 /**
+ * GET /api/enrolments/:id/refund-preview
+ * Preview refund amount for cancelling an enrolment (admin only).
+ * Query param: effectiveDate (ISO datetime string)
+ * Requirements: 9.1, 9.2, 9.5
+ */
+router.get('/:id/refund-preview', authorize(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const { effectiveDate } = z.object({
+      effectiveDate: z.string().datetime().transform((v) => new Date(v)),
+    }).parse(req.query);
+
+    const preview = await enrolmentService.getRefundPreview(req.params.id, effectiveDate);
+    res.json({ success: true, data: preview });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
  * GET /api/enrolments/:id
  * Get enrolment by ID (authenticated).
  */
