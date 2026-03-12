@@ -8,6 +8,8 @@ import ContactPage from './pages/ContactPage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/customer/DashboardPage';
+import DancersPage from './pages/customer/DancersPage';
+import DancerFormPage from './pages/customer/DancerFormPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -28,6 +30,9 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dancers" element={<DancersPage />} />
+              <Route path="/dancers/new" element={<DancerFormPage />} />
+              <Route path="/dancers/:id/edit" element={<DancerFormPage />} />
             </Route>
           </Route>
         </Routes>
