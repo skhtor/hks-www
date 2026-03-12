@@ -261,6 +261,9 @@ export class ClassService {
 
     // Verify location exists if being updated
     if (input.locationId !== undefined) {
+      if (!input.locationId) {
+        throw new Error('locationId cannot be empty');
+      }
       const location = await prisma.location.findUnique({ where: { id: input.locationId } });
       if (!location) {
         throw new Error('Location not found');

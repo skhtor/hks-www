@@ -1,4 +1,4 @@
-import { XeroClient, Contact, Contacts, Phone, Invoice as XeroInvoiceType, Invoices as XeroInvoicesType, LineItem, Payment as XeroPaymentType, Payments as XeroPaymentsType } from 'xero-node';
+import { XeroClient, Contact, Contacts, Phone, Invoice as XeroInvoiceType, Invoices as XeroInvoicesType, LineItem, LineItemTracking, Payment as XeroPaymentType, Payments as XeroPaymentsType } from 'xero-node';
 import { prisma } from '../config/database';
 import { SyncType } from '@prisma/client';
 
@@ -287,15 +287,40 @@ export class XeroService {
   }
 
   /**
+   * Resolves the location name for an invoice by looking up the household's
+   * active enrolments and returning the first location found.
+   * Requirements: 28.5
+   */
+  private async resolveInvoiceLocationName(householdId: string): Promise<string | null> {
+    try {
+      const enrolment = await prisma.enrolment.findFirst({
+        where: {
+          dancer: { householdId },
+          status: 'ACTIVE',
+        },
+        include: {
+          class: {
+            include: { location: { select: { name: true } } },
+          },
+        },
+      });
+      return enrolment?.class?.location?.name ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Synchronizes an invoice to Xero.
    * - Looks up the Invoice by id (including customer and xeroInvoice).
    * - Ensures the customer has a Xero contact (calls syncContact if needed).
    * - If a XeroInvoice record already exists: updates the Xero invoice.
    * - If not: creates a new Xero invoice with line items, account code, tax type,
    *   and AUTHORISED status, then creates the XeroInvoice link record.
+   * - Applies location as a tracking category when XERO_TRACKING_CATEGORY_ID is configured.
    * - Logs the result to SyncLog.
    *
-   * Requirements: 11.1, 11.2, 11.3, 11.4, 11.5
+   * Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 28.5
    */
   async syncInvoice(invoiceId: string): Promise<{ success: boolean; xeroInvoiceId?: string; error?: string }> {
     // Look up invoice with customer and existing xero link
@@ -344,6 +369,16 @@ export class XeroService {
     // Config from environment
     const accountCode = process.env.XERO_ACCOUNT_CODE ?? '200';
     const taxType = process.env.XERO_TAX_TYPE ?? 'OUTPUT';
+    const trackingCategoryId = process.env.XERO_TRACKING_CATEGORY_ID;
+
+    // Resolve location name for tracking (Req 28.5)
+    const locationName = await this.resolveInvoiceLocationName(invoice.customer.householdId);
+
+    // Build tracking array if tracking category is configured and location is known
+    const tracking: LineItemTracking[] | undefined =
+      trackingCategoryId && locationName
+        ? [{ trackingCategoryID: trackingCategoryId, name: locationName }]
+        : undefined;
 
     // Build line items from invoice.lineItems JSON
     const rawLineItems = Array.isArray(invoice.lineItems) ? invoice.lineItems : [];
@@ -353,6 +388,7 @@ export class XeroService {
       unitAmount: Number(item['unitAmount'] ?? 0),
       accountCode: String(item['accountCode'] ?? accountCode),
       taxType,
+      ...(tracking ? { tracking } : {}),
     }));
 
     try {
