@@ -104,4 +104,49 @@ router.get(
   }
 );
 
+/**
+ * POST /api/xero/sync/contact/:customerId
+ * Sync a customer to Xero as a contact (admin only).
+ * Requirements: 10.1, 10.2, 10.4, 10.6
+ */
+router.post(
+  '/sync/contact/:customerId',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { customerId } = req.params;
+      const result = await xeroService.syncContact(customerId);
+
+      if (!result.success) {
+        const isNotFound = result.error === 'Customer not found';
+        res.status(isNotFound ? 404 : 502).json({
+          success: false,
+          error: {
+            code: isNotFound ? 'NOT_FOUND' : 'XERO_SYNC_ERROR',
+            message: result.error ?? 'Contact sync failed',
+          },
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          xeroContactId: result.xeroContactId,
+          message: 'Contact synced successfully',
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        },
+      });
+    }
+  }
+);
+
 export default router;

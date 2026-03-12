@@ -1,4 +1,6 @@
-import { XeroClient } from 'xero-node';
+import { XeroClient, Contact, Contacts, Phone } from 'xero-node';
+import { prisma } from '../config/database';
+import { SyncType } from '@prisma/client';
 
 /**
  * In-memory token storage for Xero OAuth 2.0 tokens.
@@ -127,6 +129,147 @@ export class XeroService {
       tenantId: tokenStore.tenantId,
       tokenExpiry: tokenStore.tokenExpiry,
     };
+  }
+
+  /**
+   * Synchronizes a customer to Xero as a contact.
+   * - If a XeroContact record already exists, updates the Xero contact.
+   * - If not, searches Xero by email first to avoid duplicates (Req 10.6).
+   *   - If found: links the existing Xero contact.
+   *   - If not found: creates a new Xero contact.
+   * - Updates lastSyncedAt and logs the result to SyncLog.
+   *
+   * Requirements: 10.1, 10.2, 10.4, 10.6
+   */
+  async syncContact(customerId: string): Promise<{ success: boolean; xeroContactId?: string; error?: string }> {
+    // Look up customer with user (for email)
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+      include: { user: true },
+    });
+
+    if (!customer) {
+      await this.logSync(customerId, false, 'Customer not found');
+      return { success: false, error: 'Customer not found' };
+    }
+
+    const client = await this.getClient();
+    const tenantId = this.getTenantId();
+
+    if (!tenantId) {
+      await this.logSync(customerId, false, 'Xero tenant not configured');
+      return { success: false, error: 'Xero tenant not configured' };
+    }
+
+    try {
+      const existingXeroContact = await prisma.xeroContact.findUnique({
+        where: { customerId },
+      });
+
+      let xeroContactId: string;
+
+      if (existingXeroContact) {
+        // Update existing Xero contact
+        const contactPayload: Contact = {
+          contactID: existingXeroContact.xeroContactId,
+          name: customer.name,
+          emailAddress: customer.user.email,
+          phones: customer.mobile
+            ? [{ phoneType: Phone.PhoneTypeEnum.DEFAULT, phoneNumber: customer.mobile }]
+            : undefined,
+        };
+
+        await client.accountingApi.updateContact(tenantId, existingXeroContact.xeroContactId, {
+          contacts: [contactPayload],
+        });
+
+        await prisma.xeroContact.update({
+          where: { customerId },
+          data: { lastSyncedAt: new Date() },
+        });
+
+        xeroContactId = existingXeroContact.xeroContactId;
+      } else {
+        // Search Xero for existing contact by email (idempotency / dedup)
+        const searchResponse = await client.accountingApi.getContacts(
+          tenantId,
+          undefined, // ifModifiedSince
+          `EmailAddress="${customer.user.email}"`, // where
+          undefined, // order
+          undefined, // ids
+          undefined, // page
+          undefined, // includeArchived
+          undefined, // summaryOnly
+          undefined, // searchTerm
+        );
+
+        const contacts: Contact[] = (searchResponse.body as Contacts).contacts ?? [];
+        const matched = contacts.find(
+          (c) => c.emailAddress?.toLowerCase() === customer.user.email.toLowerCase()
+        );
+
+        if (matched && matched.contactID) {
+          // Link existing Xero contact
+          xeroContactId = matched.contactID;
+          await prisma.xeroContact.create({
+            data: {
+              customerId,
+              xeroContactId,
+              lastSyncedAt: new Date(),
+            },
+          });
+        } else {
+          // Create new Xero contact
+          const newContact: Contact = {
+            name: customer.name,
+            emailAddress: customer.user.email,
+            phones: customer.mobile
+              ? [{ phoneType: Phone.PhoneTypeEnum.DEFAULT, phoneNumber: customer.mobile }]
+              : undefined,
+          };
+
+          const createResponse = await client.accountingApi.createContacts(tenantId, {
+            contacts: [newContact],
+          });
+
+          const created = ((createResponse.body as Contacts).contacts ?? [])[0];
+          if (!created?.contactID) {
+            throw new Error('Xero did not return a contact ID after creation');
+          }
+
+          xeroContactId = created.contactID;
+          await prisma.xeroContact.create({
+            data: {
+              customerId,
+              xeroContactId,
+              lastSyncedAt: new Date(),
+            },
+          });
+        }
+      }
+
+      await this.logSync(customerId, true);
+      return { success: true, xeroContactId };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error during contact sync';
+      await this.logSync(customerId, false, message);
+      return { success: false, error: message };
+    }
+  }
+
+  /**
+   * Writes a SyncLog entry for a contact sync operation.
+   */
+  private async logSync(customerId: string, success: boolean, errorMessage?: string): Promise<void> {
+    await prisma.syncLog.create({
+      data: {
+        entityType: 'CUSTOMER',
+        entityId: customerId,
+        syncType: SyncType.CONTACT,
+        success,
+        errorMessage: errorMessage ?? null,
+      },
+    });
   }
 
   /**
