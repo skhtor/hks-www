@@ -690,7 +690,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support notes
     - _Requirements: 17.1, 17.2, 17.3_
 
-- [~] 33. Frontend - Admin portal
+- [x] 33. Frontend - Admin portal
   - [x] 33.1 Implement admin dashboard
     - Display key metrics
     - Show Xero sync status
@@ -716,13 +716,13 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Notification templates
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 23.1, 23.2_
   
-  - [~] 33.5 Implement reporting UI
+  - [x] 33.5 Implement reporting UI
     - Display all report types
     - Export to CSV
     - Filter and date range selection
     - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7_
   
-  - [~] 33.6 Implement Xero sync management UI
+  - [x] 33.6 Implement Xero sync management UI
     - Display sync errors
     - Retry failed syncs
     - View sync history

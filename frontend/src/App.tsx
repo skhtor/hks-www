@@ -20,6 +20,8 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import ClassManagementPage from './pages/admin/ClassManagementPage';
 import EnrolmentManagementPage from './pages/admin/EnrolmentManagementPage';
 import ConfigurationPage from './pages/admin/ConfigurationPage';
+import ReportsPage from './pages/admin/ReportsPage';
+import XeroSyncPage from './pages/admin/XeroSyncPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -53,6 +55,8 @@ export default function App() {
               <Route path="/admin/classes" element={<ClassManagementPage />} />
               <Route path="/admin/enrolments" element={<EnrolmentManagementPage />} />
               <Route path="/admin/configuration" element={<ConfigurationPage />} />
+              <Route path="/admin/reports" element={<ReportsPage />} />
+              <Route path="/admin/xero" element={<XeroSyncPage />} />
             </Route>
           </Route>
         </Routes>
