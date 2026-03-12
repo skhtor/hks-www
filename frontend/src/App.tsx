@@ -19,6 +19,7 @@ import AttendancePage from './pages/teacher/AttendancePage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import ClassManagementPage from './pages/admin/ClassManagementPage';
 import EnrolmentManagementPage from './pages/admin/EnrolmentManagementPage';
+import ConfigurationPage from './pages/admin/ConfigurationPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
@@ -51,6 +52,7 @@ export default function App() {
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/classes" element={<ClassManagementPage />} />
               <Route path="/admin/enrolments" element={<EnrolmentManagementPage />} />
+              <Route path="/admin/configuration" element={<ConfigurationPage />} />
             </Route>
           </Route>
         </Routes>

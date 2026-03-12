@@ -709,7 +709,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Cancel enrolments with refunds
     - _Requirements: 9.1, 9.2, 9.5_
   
-  - [~] 33.4 Implement configuration UI
+  - [x] 33.4 Implement configuration UI
     - Pricing rules management
     - Discount rules management
     - Xero settings
