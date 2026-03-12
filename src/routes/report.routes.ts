@@ -132,6 +132,39 @@ router.get('/outstanding-payments/export', async (_req: Request, res: Response) 
   }
 });
 
+/**
+ * GET /api/reports/churn
+ * Cancellations by month with optional churn rate.
+ * Requirements: 13.6
+ */
+router.get('/churn', async (req: Request, res: Response) => {
+  try {
+    const includeChurnRate = req.query.includeChurnRate === 'true';
+    const report = await reportService.getChurnReport(includeChurnRate);
+    res.json({ success: true, data: report });
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
+/**
+ * GET /api/reports/churn/export
+ * CSV export of churn report.
+ * Requirements: 13.6, 13.7
+ */
+router.get('/churn/export', async (req: Request, res: Response) => {
+  try {
+    const includeChurnRate = req.query.includeChurnRate === 'true';
+    const report = await reportService.getChurnReport(includeChurnRate);
+    const csv = reportService.exportToCsv('churn', report.byMonth);
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="report-churn.csv"');
+    res.send(csv);
+  } catch (error) {
+    handleError(error, res);
+  }
+});
+
 function handleError(error: unknown, res: Response): void {
   console.error('Report error:', error);
   res.status(500).json({

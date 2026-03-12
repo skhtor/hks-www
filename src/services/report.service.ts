@@ -50,6 +50,16 @@ export interface OutstandingPaymentsReport {
   invoices: OutstandingInvoice[];
 }
 
+export interface CancellationByMonth {
+  month: string; // YYYY-MM
+  cancellations: number;
+  churnRate?: number; // percentage of active enrolments that cancelled
+}
+
+export interface ChurnReport {
+  byMonth: CancellationByMonth[];
+}
+
 export class ReportService {
   /**
    * Returns enrolment report: active/trial counts by class, and new enrolments this month.
@@ -191,11 +201,68 @@ export class ReportService {
   }
 
   /**
+   * Returns cancellations grouped by month with optional churn rate.
+   * Uses updatedAt as the cancellation date (when status changed to CANCELLED).
+   * Requirements: 13.6
+   */
+  async getChurnReport(includeChurnRate = false): Promise<ChurnReport> {
+    const cancelledEnrolments = await prisma.enrolment.findMany({
+      where: { status: EnrolmentStatus.CANCELLED },
+      select: { updatedAt: true },
+      orderBy: { updatedAt: 'asc' },
+    });
+
+    const monthMap = new Map<string, number>();
+    for (const enrolment of cancelledEnrolments) {
+      const d = enrolment.updatedAt;
+      const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthMap.set(month, (monthMap.get(month) ?? 0) + 1);
+    }
+
+    let activeCountByMonth: Map<string, number> | null = null;
+    if (includeChurnRate && monthMap.size > 0) {
+      // For each month, count enrolments that were active at the start of that month
+      // (created before the month and not cancelled before the month)
+      activeCountByMonth = new Map<string, number>();
+      for (const month of monthMap.keys()) {
+        const [year, mon] = month.split('-').map(Number);
+        const startOfMonth = new Date(year, mon - 1, 1);
+        const count = await prisma.enrolment.count({
+          where: {
+            createdAt: { lt: startOfMonth },
+            OR: [
+              { status: { not: EnrolmentStatus.CANCELLED } },
+              { updatedAt: { gte: startOfMonth } },
+            ],
+          },
+        });
+        activeCountByMonth.set(month, count);
+      }
+    }
+
+    const byMonth: CancellationByMonth[] = Array.from(monthMap.entries()).map(
+      ([month, cancellations]) => {
+        const entry: CancellationByMonth = { month, cancellations };
+        if (includeChurnRate && activeCountByMonth) {
+          const activeCount = activeCountByMonth.get(month) ?? 0;
+          entry.churnRate =
+            activeCount > 0
+              ? Math.round((cancellations / activeCount) * 10000) / 100
+              : 0;
+        }
+        return entry;
+      }
+    );
+
+    return { byMonth };
+  }
+
+  /**
    * Converts report data to CSV string.
    * Requirements: 13.7
    */
   exportToCsv(
-    _reportType: 'enrolment' | 'capacity' | 'revenue' | 'outstanding',
+    _reportType: 'enrolment' | 'capacity' | 'revenue' | 'outstanding' | 'churn',
     data: unknown[]
   ): string {
     if (data.length === 0) return '';

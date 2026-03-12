@@ -512,7 +512,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 24. Reporting service
+- [-] 24. Reporting service
   - [x] 24.1 Implement enrolment reports
     - Create endpoint for active enrolments by class
     - Create endpoint for new enrolments this month
@@ -533,7 +533,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Include customer details
     - _Requirements: 13.4_
   
-  - [ ] 24.5 Implement churn report (optional)
+  - [x] 24.5 Implement churn report (optional)
     - Create endpoint for cancellations by month
     - Calculate churn rate
     - _Requirements: 13.6_
@@ -543,7 +543,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support all report types
     - _Requirements: 13.7_
   
-  - [ ] 24.7 Implement attendance reports (optional)
+  - [~] 24.7 Implement attendance reports (optional)
     - Create endpoint for attendance trends
     - Group by class or student
     - _Requirements: 17.4_
