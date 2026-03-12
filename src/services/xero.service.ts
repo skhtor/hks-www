@@ -1,4 +1,4 @@
-import { XeroClient, Contact, Contacts, Phone } from 'xero-node';
+import { XeroClient, Contact, Contacts, Phone, Invoice as XeroInvoiceType, Invoices as XeroInvoicesType, LineItem } from 'xero-node';
 import { prisma } from '../config/database';
 import { SyncType } from '@prisma/client';
 
@@ -258,6 +258,145 @@ export class XeroService {
   }
 
   /**
+   * Synchronizes an invoice to Xero.
+   * - Looks up the Invoice by id (including customer and xeroInvoice).
+   * - Ensures the customer has a Xero contact (calls syncContact if needed).
+   * - If a XeroInvoice record already exists: updates the Xero invoice.
+   * - If not: creates a new Xero invoice with line items, account code, tax type,
+   *   and AUTHORISED status, then creates the XeroInvoice link record.
+   * - Logs the result to SyncLog.
+   *
+   * Requirements: 11.1, 11.2, 11.3, 11.4, 11.5
+   */
+  async syncInvoice(invoiceId: string): Promise<{ success: boolean; xeroInvoiceId?: string; error?: string }> {
+    // Look up invoice with customer and existing xero link
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: {
+        customer: true,
+        xeroInvoice: true,
+      },
+    });
+
+    if (!invoice) {
+      await this.logInvoiceSync(invoiceId, false, 'Invoice not found');
+      return { success: false, error: 'Invoice not found' };
+    }
+
+    // Ensure customer has a Xero contact
+    let xeroContact = await prisma.xeroContact.findUnique({
+      where: { customerId: invoice.customerId },
+    });
+
+    if (!xeroContact) {
+      const contactResult = await this.syncContact(invoice.customerId);
+      if (!contactResult.success) {
+        await this.logInvoiceSync(invoiceId, false, `Contact sync failed: ${contactResult.error}`);
+        return { success: false, error: `Contact sync failed: ${contactResult.error}` };
+      }
+      xeroContact = await prisma.xeroContact.findUnique({
+        where: { customerId: invoice.customerId },
+      });
+    }
+
+    if (!xeroContact) {
+      await this.logInvoiceSync(invoiceId, false, 'Could not resolve Xero contact');
+      return { success: false, error: 'Could not resolve Xero contact' };
+    }
+
+    const client = await this.getClient();
+    const tenantId = this.getTenantId();
+
+    if (!tenantId) {
+      await this.logInvoiceSync(invoiceId, false, 'Xero tenant not configured');
+      return { success: false, error: 'Xero tenant not configured' };
+    }
+
+    // Config from environment
+    const accountCode = process.env.XERO_ACCOUNT_CODE ?? '200';
+    const taxType = process.env.XERO_TAX_TYPE ?? 'OUTPUT';
+
+    // Build line items from invoice.lineItems JSON
+    const rawLineItems = Array.isArray(invoice.lineItems) ? invoice.lineItems : [];
+    const lineItems: LineItem[] = (rawLineItems as Array<Record<string, unknown>>).map((item) => ({
+      description: String(item['description'] ?? ''),
+      quantity: Number(item['quantity'] ?? 1),
+      unitAmount: Number(item['unitAmount'] ?? 0),
+      accountCode: String(item['accountCode'] ?? accountCode),
+      taxType,
+    }));
+
+    try {
+      let xeroInvoiceId: string;
+
+      if (invoice.xeroInvoice) {
+        // Update existing Xero invoice
+        const updatePayload: XeroInvoiceType = {
+          invoiceID: invoice.xeroInvoice.xeroInvoiceId,
+          lineItems,
+        };
+
+        await client.accountingApi.updateInvoice(
+          tenantId,
+          invoice.xeroInvoice.xeroInvoiceId,
+          { invoices: [updatePayload] },
+          undefined,
+          invoice.invoiceNumber, // idempotency key
+        );
+
+        await prisma.xeroInvoice.update({
+          where: { invoiceId },
+          data: { lastSyncedAt: new Date() },
+        });
+
+        xeroInvoiceId = invoice.xeroInvoice.xeroInvoiceId;
+      } else {
+        // Create new Xero invoice
+        const dueDate = invoice.dueDate.toISOString().split('T')[0];
+
+        const newInvoice: XeroInvoiceType = {
+          type: XeroInvoiceType.TypeEnum.ACCREC,
+          contact: { contactID: xeroContact.xeroContactId },
+          invoiceNumber: invoice.invoiceNumber,
+          dueDate,
+          lineItems,
+          status: XeroInvoiceType.StatusEnum.AUTHORISED,
+        };
+
+        const createResponse = await client.accountingApi.createInvoices(
+          tenantId,
+          { invoices: [newInvoice] } as XeroInvoicesType,
+          undefined,
+          undefined,
+          invoice.invoiceNumber, // idempotency key
+        );
+
+        const created = ((createResponse.body as XeroInvoicesType).invoices ?? [])[0];
+        if (!created?.invoiceID) {
+          throw new Error('Xero did not return an invoice ID after creation');
+        }
+
+        xeroInvoiceId = created.invoiceID;
+
+        await prisma.xeroInvoice.create({
+          data: {
+            invoiceId,
+            xeroInvoiceId,
+            lastSyncedAt: new Date(),
+          },
+        });
+      }
+
+      await this.logInvoiceSync(invoiceId, true);
+      return { success: true, xeroInvoiceId };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error during invoice sync';
+      await this.logInvoiceSync(invoiceId, false, message);
+      return { success: false, error: message };
+    }
+  }
+
+  /**
    * Writes a SyncLog entry for a contact sync operation.
    */
   private async logSync(customerId: string, success: boolean, errorMessage?: string): Promise<void> {
@@ -266,6 +405,21 @@ export class XeroService {
         entityType: 'CUSTOMER',
         entityId: customerId,
         syncType: SyncType.CONTACT,
+        success,
+        errorMessage: errorMessage ?? null,
+      },
+    });
+  }
+
+  /**
+   * Writes a SyncLog entry for an invoice sync operation.
+   */
+  private async logInvoiceSync(invoiceId: string, success: boolean, errorMessage?: string): Promise<void> {
+    await prisma.syncLog.create({
+      data: {
+        entityType: 'INVOICE',
+        entityId: invoiceId,
+        syncType: SyncType.INVOICE,
         success,
         errorMessage: errorMessage ?? null,
       },

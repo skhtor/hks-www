@@ -149,4 +149,49 @@ router.post(
   }
 );
 
+/**
+ * POST /api/xero/sync/invoice/:invoiceId
+ * Sync an invoice to Xero (admin only).
+ * Requirements: 11.1, 11.2, 11.3, 11.4, 11.5
+ */
+router.post(
+  '/sync/invoice/:invoiceId',
+  authenticate,
+  authorize(UserRole.ADMIN),
+  async (req: Request, res: Response) => {
+    try {
+      const { invoiceId } = req.params;
+      const result = await xeroService.syncInvoice(invoiceId);
+
+      if (!result.success) {
+        const isNotFound = result.error === 'Invoice not found';
+        res.status(isNotFound ? 404 : 502).json({
+          success: false,
+          error: {
+            code: isNotFound ? 'NOT_FOUND' : 'XERO_SYNC_ERROR',
+            message: result.error ?? 'Invoice sync failed',
+          },
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: {
+          xeroInvoiceId: result.xeroInvoiceId,
+          message: 'Invoice synced successfully',
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error instanceof Error ? error.message : 'An unexpected error occurred',
+        },
+      });
+    }
+  }
+);
+
 export default router;
