@@ -441,7 +441,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Include student names and relevant information
     - _Requirements: 7.6_
 
-- [ ] 20. Admin portal - class management
+- [x] 20. Admin portal - class management
   - [x] 20.1 Implement admin class CRUD UI endpoints
     - Create endpoints for class creation form
     - Implement class update and delete
@@ -460,7 +460,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - _Requirements: 24.3_
 
 - [ ] 21. Admin portal - configuration
-  - [~] 21.1 Implement pricing rule configuration UI
+  - [x] 21.1 Implement pricing rule configuration UI
     - Create endpoints for pricing rule CRUD
     - Support per-class, tiered, and term-based rules
     - _Requirements: 22.1, 22.2_
