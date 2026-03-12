@@ -508,7 +508,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Implement retry logic
     - _Requirements: 12.5, 19.2_
 
-- [ ] 23. Checkpoint - Teacher portal and notifications
+- [x] 23. Checkpoint - Teacher portal and notifications
   - Ensure all tests pass, ask the user if questions arise.
 
 
@@ -596,7 +596,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Prevent mid-term cancellations (configurable)
     - _Requirements: 29.1, 29.2, 29.3, 29.4, 29.5_
 
-- [ ] 28. Cancellation and refund policies
+- [~] 28. Cancellation and refund policies
   - [x] 28.1 Implement policy configuration
     - Create endpoints for cancellation policy settings
     - Configure notice periods and refund percentages
@@ -616,7 +616,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Show policy to customers before enrolment
     - _Requirements: 26.5_
 
-- [ ] 29. Checkpoint - Advanced features
+- [~] 29. Checkpoint - Advanced features
   - Ensure all tests pass, ask the user if questions arise.
 
 
@@ -642,7 +642,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Handle registration errors
     - _Requirements: 1.1_
 
-- [ ] 31. Frontend - Customer portal
+- [~] 31. Frontend - Customer portal
   - [x] 31.1 Implement customer dashboard
     - Display enrolments
     - Show next classes
@@ -673,7 +673,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Download PDFs
     - _Requirements: 6.4_
 
-- [ ] 32. Frontend - Teacher portal
+- [~] 32. Frontend - Teacher portal
   - [~] 32.1 Implement teacher dashboard
     - Display classes for current week
     - Quick access to class rolls
@@ -690,7 +690,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Support notes
     - _Requirements: 17.1, 17.2, 17.3_
 
-- [ ] 33. Frontend - Admin portal
+- [~] 33. Frontend - Admin portal
   - [~] 33.1 Implement admin dashboard
     - Display key metrics
     - Show Xero sync status
@@ -728,11 +728,11 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - View sync history
     - _Requirements: 10.3, 11.6, 12.3, 30.2_
 
-- [ ] 34. Checkpoint - Frontend complete
+- [~] 34. Checkpoint - Frontend complete
   - Ensure all tests pass, ask the user if questions arise.
 
 
-- [ ] 35. Accessibility and mobile responsiveness
+- [~] 35. Accessibility and mobile responsiveness
   - [~] 35.1 Implement accessibility features
     - Add ARIA labels to interactive elements
     - Ensure keyboard navigation works
@@ -755,7 +755,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Test keyboard-only navigation
     - _Requirements: 20.1_
 
-- [ ] 36. Security hardening
+- [~] 36. Security hardening
   - [~] 36.1 Implement security headers
     - Add HSTS headers
     - Configure CORS properly
@@ -784,7 +784,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 39: Audit Log Completeness**
     - **Validates: Requirements 9.6, 18.6**
 
-- [ ] 37. Performance optimization
+- [~] 37. Performance optimization
   - [~] 37.1 Implement caching strategy
     - Cache timetable data (5-minute TTL)
     - Cache pricing rules (1-hour TTL)
@@ -802,7 +802,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Enable gzip compression
     - _Requirements: Performance best practices_
 
-- [ ] 38. Monitoring and observability
+- [~] 38. Monitoring and observability
   - [~] 38.1 Set up application monitoring
     - Integrate APM tool (e.g., New Relic, Datadog)
     - Track response times and throughput
@@ -834,7 +834,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Display error counts
     - _Requirements: 30.1, 30.2, 30.3, 30.4, 30.5_
 
-- [ ] 39. Deployment and infrastructure
+- [~] 39. Deployment and infrastructure
   - [~] 39.1 Create production Docker images
     - Create Dockerfile for API
     - Create Dockerfile for frontend
@@ -868,7 +868,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Document recovery procedures
     - _Requirements: Deployment_
 
-- [ ] 40. Documentation and training
+- [~] 40. Documentation and training
   - [~] 40.1 Write API documentation
     - Document all endpoints
     - Include request/response examples
@@ -887,7 +887,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - Create troubleshooting guide
     - _Requirements: Documentation_
 
-- [ ] 41. Final checkpoint and launch preparation
+- [~] 41. Final checkpoint and launch preparation
   - Run full test suite (unit + property tests)
   - Perform security audit
   - Load testing
