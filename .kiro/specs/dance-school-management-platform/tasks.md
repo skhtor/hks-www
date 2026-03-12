@@ -436,7 +436,7 @@ The implementation uses TypeScript with Node.js for the backend API, React for t
     - **Property 33: Attendance Record Persistence**
     - **Validates: Requirements 17.2**
   
-  - [-] 19.6 Implement class roll export
+  - [x] 19.6 Implement class roll export
     - Create CSV export endpoint
     - Include student names and relevant information
     - _Requirements: 7.6_
