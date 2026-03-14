@@ -57,9 +57,9 @@ export default function ClassManagementPage() {
   useEffect(() => {
     Promise.all([classes.list(), teachers.list(), locations.list()])
       .then(([classRes, teacherRes, locationRes]) => {
-        setClassList(classRes.data);
-        setTeacherList(teacherRes.data);
-        setLocationList(locationRes.data);
+        setClassList(classRes.data ?? []);
+        setTeacherList(teacherRes.data ?? []);
+        setLocationList(locationRes.data ?? []);
       })
       .catch(() => setError('Failed to load data'))
       .finally(() => setLoading(false));

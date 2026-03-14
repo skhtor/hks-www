@@ -27,7 +27,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await auth.login(email, password);
-      const { accessToken, user } = res.data.data;
+      const { accessToken, user } = res.data;
       login(accessToken, { ...user, name: user.email });
       navigate('/dashboard');
     } catch (err: unknown) {

@@ -16,9 +16,14 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 responses globally
+// Handle 401 responses globally, and unwrap { success, data } envelope
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+      response.data = response.data.data;
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
