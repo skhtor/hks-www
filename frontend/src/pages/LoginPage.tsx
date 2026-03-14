@@ -27,11 +27,11 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await auth.login(email, password);
-      const { token, user } = res.data;
-      login(token, user);
+      const { accessToken, user } = res.data.data;
+      login(accessToken, { ...user, name: user.email });
       navigate('/dashboard');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
       setApiError(msg || 'Invalid email or password.');
     } finally {
       setLoading(false);
