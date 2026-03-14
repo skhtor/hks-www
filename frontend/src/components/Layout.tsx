@@ -61,12 +61,14 @@ export default function Layout() {
             ))}
             {user ? (
               <>
-                <Link
-                  to={dashboardPath}
-                  className="hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded px-1"
-                >
-                  Dashboard
-                </Link>
+                {user.role !== 'ADMIN' && (
+                  <Link
+                    to={dashboardPath}
+                    className="hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded px-1"
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 {user.role === 'ADMIN' && (
                   <Link
                     to="/admin/dashboard"
@@ -134,13 +136,15 @@ export default function Layout() {
             ))}
             {user ? (
               <>
-                <Link
-                  to={dashboardPath}
-                  className="block py-2 text-sm font-medium text-gray-600 hover:text-purple-700"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
+                {user.role !== 'ADMIN' && (
+                  <Link
+                    to={dashboardPath}
+                    className="block py-2 text-sm font-medium text-gray-600 hover:text-purple-700"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                )}
                 {user.role === 'ADMIN' && (
                   <Link
                     to="/admin/dashboard"
