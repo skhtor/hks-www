@@ -22,10 +22,10 @@ const createClassSchema = z.object({
   }),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Start time must be in HH:MM format'),
   duration: z.number().int().positive('Duration must be a positive integer (minutes)'),
-  locationId: z.string().min(1, 'Location is required'),
-  teacherId: z.string().min(1, 'Teacher is required'),
+  locationId: z.string().min(1).optional(),
+  teacherId: z.string().min(1).optional(),
   capacity: z.number().int().positive('Capacity must be a positive integer'),
-  pricingRuleId: z.string().min(1, 'Pricing rule is required'),
+  pricingRuleId: z.string().min(1).optional(),
   description: z.string().optional(),
   ageRange: z
     .object({ min: z.number().int().nonnegative().optional(), max: z.number().int().nonnegative().optional() })

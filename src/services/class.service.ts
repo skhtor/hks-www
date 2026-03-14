@@ -163,35 +163,37 @@ export class ClassService {
       description, ageRange, roomId, startDate, endDate,
     } = input;
 
-    // Verify teacher exists
-    const teacher = await prisma.teacher.findUnique({ where: { id: teacherId } });
-    if (!teacher) {
-      throw new Error('Teacher not found');
+    // Verify teacher exists (if provided)
+    if (teacherId) {
+      const teacher = await prisma.teacher.findUnique({ where: { id: teacherId } });
+      if (!teacher) throw new Error('Teacher not found');
     }
 
-    // Verify location exists
-    const location = await prisma.location.findUnique({ where: { id: locationId } });
-    if (!location) {
-      throw new Error('Location not found');
+    // Verify location exists (if provided)
+    if (locationId) {
+      const location = await prisma.location.findUnique({ where: { id: locationId } });
+      if (!location) throw new Error('Location not found');
     }
 
-    // Verify pricing rule exists
-    const pricingRule = await prisma.pricingRule.findUnique({ where: { id: pricingRuleId } });
-    if (!pricingRule) {
-      throw new Error('Pricing rule not found');
+    // Verify pricing rule exists (if provided)
+    if (pricingRuleId) {
+      const pricingRule = await prisma.pricingRule.findUnique({ where: { id: pricingRuleId } });
+      if (!pricingRule) throw new Error('Pricing rule not found');
     }
 
-    // Check for scheduling conflicts (Req 24.1, 24.2, 24.5)
-    const conflictResult = await this.checkSchedulingConflicts({
-      dayOfWeek,
-      startTime,
-      duration,
-      teacherId,
-      roomId,
-    });
-    if (!conflictResult.valid) {
-      const messages = conflictResult.conflicts.map((c) => c.message).join('; ');
-      throw new Error(`Scheduling conflict detected: ${messages}`);
+    // Check for scheduling conflicts only when teacher/room are set
+    if (teacherId || roomId) {
+      const conflictResult = await this.checkSchedulingConflicts({
+        dayOfWeek,
+        startTime,
+        duration,
+        teacherId,
+        roomId,
+      });
+      if (!conflictResult.valid) {
+        const messages = conflictResult.conflicts.map((c) => c.message).join('; ');
+        throw new Error(`Scheduling conflict detected: ${messages}`);
+      }
     }
 
     return prisma.class.create({

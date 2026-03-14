@@ -137,20 +137,20 @@ model Class {
   dayOfWeek     DayOfWeek
   startTime     String
   duration      Int
-  locationId    String
+  locationId    String?
   roomId        String?
-  teacherId     String
+  teacherId     String?
   capacity      Int
   enrolledCount Int       @default(0)
   startDate     DateTime?
   endDate       DateTime?
-  pricingRuleId String
+  pricingRuleId String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  location          Location           @relation(fields: [locationId], references: [id])
-  teacher           Teacher            @relation(fields: [teacherId], references: [id])
-  pricingRule       PricingRule        @relation(fields: [pricingRuleId], references: [id])
+  location          Location?          @relation(fields: [locationId], references: [id])
+  teacher           Teacher?           @relation(fields: [teacherId], references: [id])
+  pricingRule       PricingRule?       @relation(fields: [pricingRuleId], references: [id])
   enrolments        Enrolment[]
   waitlistEntries   WaitlistEntry[]
   attendanceRecords AttendanceRecord[]

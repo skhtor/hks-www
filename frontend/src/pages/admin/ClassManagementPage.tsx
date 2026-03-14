@@ -103,10 +103,29 @@ export default function ClassManagementPage() {
     e.preventDefault();
     setSaving(true);
     setConflictError('');
-    const payload = {
+
+    // Calculate duration in minutes from startTime and endTime
+    const [startH, startM] = form.startTime.split(':').map(Number);
+    const [endH, endM] = form.endTime.split(':').map(Number);
+    const duration = (endH * 60 + endM) - (startH * 60 + startM);
+
+    if (duration <= 0) {
+      setError('End time must be after start time.');
+      setSaving(false);
+      return;
+    }
+
+    const payload: Record<string, unknown> = {
       ...form,
+      dayOfWeek: form.dayOfWeek.toUpperCase(),
       capacity: Number(form.capacity),
+      duration,
     };
+    // Strip empty optional foreign keys so backend doesn't get empty strings
+    if (!payload.teacherId) delete payload.teacherId;
+    if (!payload.locationId) delete payload.locationId;
+    if (!payload.pricingRuleId) delete payload.pricingRuleId;
+    delete payload.endTime;
     try {
       if (editingId) {
         const res = await classes.update(editingId, payload);
@@ -117,7 +136,14 @@ export default function ClassManagementPage() {
       }
       closeForm();
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? '';
+      const errData = err?.response?.data;
+      const details = errData?.error?.details;
+      let msg: string;
+      if (details && typeof details === 'object') {
+        msg = Object.values(details).join(', ');
+      } else {
+        msg = errData?.error?.message ?? errData?.message ?? '';
+      }
       if (
         err?.response?.status === 409 ||
         msg.toLowerCase().includes('conflict') ||
