@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { authService } from '../services/auth.service';
 import { UserRole } from '@prisma/client';
 import { authenticate } from '../middleware/auth.middleware';
+import { config } from '../config/env';
 
 const router = Router();
 
@@ -216,14 +217,12 @@ router.post('/reset-password-request', async (req: Request, res: Response) => {
     const result = await authService.requestPasswordReset(validatedData.email);
 
     // In production, send email with reset link
-    // For now, return token in response (development only)
     res.status(200).json({
       success: true,
       data: {
         message: 'If the email exists, a reset link will be sent',
-        // Remove token from response in production
-        token: result.token,
-        expiresAt: result.expiresAt,
+        // Expose token only in development to aid local testing
+        ...(config.env !== 'production' && { token: result.token, expiresAt: result.expiresAt }),
       },
     });
   } catch (error) {
