@@ -11,7 +11,7 @@ const router = Router();
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),
-  role: z.nativeEnum(UserRole).optional(),
+  // Role is not accepted from the client — all self-registrations are CUSTOMER
 });
 
 const loginSchema = z.object({
@@ -54,7 +54,8 @@ router.post('/register', async (req: Request, res: Response) => {
   try {
     const validatedData = registerSchema.parse(req.body);
 
-    const result = await authService.register(validatedData);
+    // Role is always CUSTOMER for self-registration; admins/teachers are created by admins
+    const result = await authService.register({ ...validatedData, role: UserRole.CUSTOMER });
 
     res.status(201).json({
       success: true,
