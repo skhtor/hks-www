@@ -317,25 +317,11 @@ router.post('/reset-password', async (req: Request, res: Response) => {
 /**
  * POST /api/auth/change-password
  * Change password for authenticated user
- * Note: This endpoint requires authentication middleware (to be implemented)
  */
-router.post('/change-password', async (req: Request, res: Response) => {
+router.post('/change-password', authenticate, async (req: Request, res: Response) => {
   try {
     const validatedData = changePasswordSchema.parse(req.body);
-
-    // TODO: Get userId from authenticated user (req.user)
-    // For now, expect userId in body (development only)
-    const userId = (req.body as any).userId;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
-        },
-      });
-    }
+    const userId = req.user!.userId;
 
     await authService.changePassword(userId, validatedData.oldPassword, validatedData.newPassword);
 
