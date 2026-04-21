@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import client from '../api/client';
 
 interface User {
   id: string;
@@ -9,41 +10,37 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
+  loading: boolean;
+  login: (user: User) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const stored = localStorage.getItem('user');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      localStorage.removeItem('user');
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const login = (newToken: string, newUser: User) => {
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setToken(newToken);
+  // On mount, restore session from the HttpOnly cookie via /me
+  useEffect(() => {
+    client.get('/auth/me')
+      .then(res => setUser({ ...res.data.user, name: res.data.user.email }))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const login = (newUser: User) => {
+    // Cookies are set by the server — just update local state
     setUser(newUser);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setToken(null);
+    client.post('/auth/logout').catch(() => {});
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

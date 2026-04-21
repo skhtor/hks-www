@@ -2,32 +2,26 @@ import axios from 'axios';
 
 const apiClient = axios.create({
   baseURL: '/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { 'Content-Type': 'application/json' },
+  // Required for HttpOnly cookies to be sent cross-origin in dev
+  withCredentials: true,
 });
 
-// Attach JWT token to every request if present
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Handle 401 responses globally, and unwrap { success, data } envelope
+// Unwrap { success, data } envelope
 apiClient.interceptors.response.use(
   (response) => {
-    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+    if (
+      response.data &&
+      typeof response.data === 'object' &&
+      'success' in response.data &&
+      'data' in response.data
+    ) {
       response.data = response.data.data;
     }
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-    }
+    // 401s are handled by the caller / AuthContext /me check
     return Promise.reject(error);
   }
 );

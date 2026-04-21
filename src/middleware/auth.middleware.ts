@@ -14,7 +14,7 @@ declare global {
 
 /**
  * Authentication middleware
- * Validates JWT token and attaches user to request
+ * Reads JWT from HttpOnly cookie (preferred) or Authorization header (fallback for API clients).
  */
 export const authenticate = async (
   req: Request,
@@ -22,32 +22,28 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
+    // Prefer HttpOnly cookie; fall back to Bearer token for API/test clients
+    const token: string | undefined =
+      req.cookies?.accessToken ??
+      (req.headers.authorization?.startsWith('Bearer ')
+        ? req.headers.authorization.substring(7)
+        : undefined);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       res.status(401).json({
         success: false,
-        error: {
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required',
-        },
+        error: { code: 'UNAUTHORIZED', message: 'Authentication required' },
       });
       return;
     }
 
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
     const payload = await authService.validateToken(token);
     req.user = payload;
-
     next();
-  } catch (error) {
+  } catch {
     res.status(401).json({
       success: false,
-      error: {
-        code: 'INVALID_TOKEN',
-        message: 'Invalid or expired token',
-      },
+      error: { code: 'INVALID_TOKEN', message: 'Invalid or expired token' },
     });
   }
 };

@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import { config } from './config/env';
 import { getRedisClient } from './config/redis';
 import { sanitizeInput, requestId } from './middleware/security.middleware';
@@ -88,6 +89,9 @@ export const createApp = (): Application => {
   // Body parsing middleware
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Cookie parsing (required for HttpOnly auth cookies)
+  app.use(cookieParser());
 
   // Input sanitization
   app.use(sanitizeInput);

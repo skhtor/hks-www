@@ -27,8 +27,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await auth.login(email, password);
-      const { accessToken, user } = res.data;
-      login(accessToken, { ...user, name: user.email });
+      const { user } = res.data;
+      login({ ...user, name: user.email });
       if (user.role === 'ADMIN') navigate('/admin/dashboard');
       else if (user.role === 'TEACHER') navigate('/teacher/dashboard');
       else navigate('/dashboard');

@@ -39,7 +39,8 @@ export default function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
           </Route>
-          <Route element={<ProtectedRoute />}>
+          {/* Customer routes */}
+          <Route element={<ProtectedRoute allowedRoles={['CUSTOMER']} />}>
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dancers" element={<DancersPage />} />
@@ -48,9 +49,19 @@ export default function App() {
               <Route path="/enrol" element={<EnrolmentPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/billing" element={<BillingPage />} />
+            </Route>
+          </Route>
+          {/* Teacher routes */}
+          <Route element={<ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} />}>
+            <Route element={<Layout />}>
               <Route path="/teacher/dashboard" element={<TeacherDashboardPage />} />
               <Route path="/teacher/classes/:id/roll" element={<ClassRollPage />} />
               <Route path="/teacher/classes/:id/attendance" element={<AttendancePage />} />
+            </Route>
+          </Route>
+          {/* Admin routes */}
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route element={<Layout />}>
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route path="/admin/classes" element={<ClassManagementPage />} />
               <Route path="/admin/enrolments" element={<EnrolmentManagementPage />} />
