@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Home" isHome>
+  <section class="hero">
+    <div class="container">
+      <h1>HKS Dance</h1>
+      <p class="hero-subtitle">Armenian folk dance in Melbourne</p>
+      <a href="/about" class="btn btn-primary">Learn More</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--color-black);
+  }
+
+  .hero h1 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .hero-subtitle {
+    font-size: 1.25rem;
+    color: var(--color-gray-200);
+    margin-bottom: var(--space-lg);
+  }
+</style>

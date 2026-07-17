@@ -1,0 +1,213 @@
+---
+const currentPath = Astro.url.pathname;
+
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="nav-inner container">
+    <a href="/" class="nav-logo" aria-label="HKS Dance - Home">
+      <span class="nav-title">HKS Dance</span>
+    </a>
+
+    <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Toggle navigation menu">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+
+    <ul id="nav-menu" class="nav-links" role="list">
+      {links.map(link => (
+        <li>
+          <a
+            href={link.href}
+            class:list={['nav-link', { active: currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href)) }]}
+            aria-current={currentPath === link.href ? 'page' : undefined}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</nav>
+
+<style>
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background: transparent;
+    backdrop-filter: none;
+    border-bottom: 1px solid transparent;
+    z-index: 100;
+    transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease;
+  }
+
+  .nav.scrolled {
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .nav.hidden {
+    transform: translateY(-100%);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .nav-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--color-white);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: var(--space-lg);
+    list-style: none;
+  }
+
+  .nav-link {
+    font-weight: 500;
+    color: var(--color-gray-200);
+    padding: var(--space-xs) 0;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+
+  .nav-link:hover {
+    border-bottom-color: rgba(255, 255, 255, 0.4);
+  }
+
+  .nav-link.active {
+    border-bottom-color: var(--color-white);
+  }
+
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: var(--space-sm);
+    min-width: 48px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-toggle-bar {
+    display: block;
+    width: 28px;
+    height: 3px;
+    background: var(--color-white);
+    transition: transform 0.2s ease;
+  }
+
+  @media (max-width: 768px) {
+    .nav-toggle {
+      display: flex;
+    }
+
+    .nav-links {
+      display: none;
+      position: absolute;
+      top: var(--nav-height);
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: flex-end;
+      background: var(--color-black);
+      padding: var(--space-lg) var(--space-xl);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      gap: var(--space-sm);
+    }
+
+    .nav-links.open {
+      display: flex;
+    }
+
+    .nav-link {
+      padding: 0;
+      border-bottom: none;
+      font-size: 1.2rem;
+    }
+  }
+</style>
+
+<script is:inline>
+  function initNav() {
+    var toggle = document.querySelector('.nav-toggle');
+    var menu = document.querySelector('.nav-links');
+    var nav = document.querySelector('.nav');
+    var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    if (toggle) {
+      toggle.addEventListener('click', function() {
+        var expanded = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!expanded));
+        menu.classList.toggle('open');
+        if (isMobile) {
+          if (!expanded) {
+            nav.classList.add('scrolled');
+          } else {
+            nav.classList.remove('scrolled');
+          }
+        }
+      });
+    }
+
+    var isHome = window.location.pathname === '/';
+    if (isMobile) {
+      nav.classList.remove('scrolled');
+      menu.classList.remove('open');
+      toggle && toggle.setAttribute('aria-expanded', 'false');
+    } else if (!isHome) {
+      nav.classList.add('scrolled');
+    } else if (window.scrollY <= 100) {
+      nav.classList.remove('scrolled');
+    }
+
+    if (!isMobile) {
+      var lastScroll = 0;
+      window.addEventListener('scroll', function() {
+        var currentScroll = window.scrollY;
+        if (isHome) {
+          if (currentScroll > 100) {
+            nav.classList.add('scrolled');
+          } else {
+            nav.classList.remove('scrolled');
+          }
+        }
+        if (currentScroll > lastScroll && currentScroll > 80) {
+          nav.classList.add('hidden');
+        } else {
+          nav.classList.remove('hidden');
+        }
+        lastScroll = currentScroll;
+      });
+    }
+  }
+
+  initNav();
+  document.addEventListener('astro:after-swap', initNav);
+</script>
