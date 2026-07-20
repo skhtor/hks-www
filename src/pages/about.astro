@@ -1,0 +1,130 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="About" description="The story behind HKS Dance – Hermine Kuyumcian's journey from Armenia to Melbourne, and 32 years of keeping Armenian dance alive.">
+  <section class="about-hero section">
+    <div class="container">
+      <h1>About HKS Dance</h1>
+      <p class="about-intro">HKS Dance is the culmination of a lifetime's dedication to Armenian dance. Founded by Hermine Kuyumcian, it's both a new beginning and a continuation of a legacy that spans over three decades in Australia.</p>
+    </div>
+  </section>
+
+  <section class="story section">
+    <div class="container">
+      <h2>The Story</h2>
+      <div class="story-content">
+        <p>In 1994, Hermine Kuyumcian formed Azad Gharibian Dance (AGD) – a living tribute to the legendary Armenian choreographer whose sudden passing in 1988 inspired her to carry his work forward. For 32 years, she volunteered her time, growing AGD into the first and only Armenian dance group in Victoria, with over 80 students ranging from age four to 70+.</p>
+        <p>Now, Hermine has taken the next step. HKS Dance is her own studio – a dedicated space where the Armenian community can come together to move, learn, and grow. AGD continues to thrive, rehearsing at the HKS studio, while new programs expand what's possible under one roof.</p>
+        <p>From traditional folk dance to body conditioning, from tiny tots to seasoned performers, HKS Dance is built on the same values that made AGD what it is: inclusivity, passion, and an unwavering commitment to keeping Armenian culture alive in Australia.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="founder section">
+    <div class="container">
+      <h2>Hermine Kuyumcian</h2>
+      <div class="founder-content">
+        <p>Born in Yerevan, Armenia, Hermine started dancing at the age of five. By 12, she was already an assistant dance teacher – the youngest in her group. By 16, she was invited to join the renowned "Krounk" dance ensemble as a professional dancer under the direction of choreographer Azad Gharibian.</p>
+        <p>After migrating to Australia, Hermine dedicated herself to preserving Armenian dance in her new home. In 1994, she formed AGD – and for over three decades, she taught, choreographed, and performed entirely as a volunteer, driven by nothing but love for the art form and her community.</p>
+        <p>HKS Dance represents the next chapter: a space that is wholly hers, where she can expand beyond choreography into new disciplines while continuing the cultural mission that has defined her life's work.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="values section">
+    <div class="container">
+      <h2>What we stand for</h2>
+      <div class="values-grid">
+        <div class="value-item">
+          <h3>Culture</h3>
+          <p>Armenian dance is more than movement – it's memory, identity, and connection to our heritage. We keep it alive for the next generation.</p>
+        </div>
+        <div class="value-item">
+          <h3>Community</h3>
+          <p>From our youngest Mini Armenians to our most experienced dancers, everyone belongs. This is a family, not just a class.</p>
+        </div>
+        <div class="value-item">
+          <h3>Growth</h3>
+          <p>32 years of experience, and still expanding. New classes, new students, new ways to move – all rooted in tradition.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="agd-relationship section">
+    <div class="container">
+      <h2>HKS & AGD</h2>
+      <div class="relationship-content">
+        <p>Azad Gharibian Dance continues to operate as it always has – a not-for-profit organisation dedicated to performing and preserving the choreography of Azad Gharibian. AGD now rehearses at the HKS studio, and Hermine continues to lead the group as she has for over 30 years.</p>
+        <p>HKS Dance is the broader umbrella: the studio itself, plus the new class offerings (Body Conditioning, Mini Armenians, Traditional Dance) that sit alongside AGD's existing programs.</p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .about-hero {
+    text-align: center;
+  }
+
+  .about-hero h1 {
+    margin-bottom: var(--space-lg);
+  }
+
+  .about-intro {
+    font-size: 1.15rem;
+    color: var(--color-gray-200);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  .story, .founder, .values, .agd-relationship {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .story h2, .founder h2, .values h2, .agd-relationship h2 {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+  }
+
+  .story-content, .founder-content, .relationship-content {
+    max-width: 750px;
+    margin: 0 auto;
+  }
+
+  .story-content p, .founder-content p, .relationship-content p {
+    margin-bottom: var(--space-md);
+    color: var(--color-gray-200);
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .value-item {
+    text-align: center;
+    padding: var(--space-lg);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+  }
+
+  .value-item h3 {
+    margin-bottom: var(--space-xs);
+    color: var(--color-accent);
+  }
+
+  .value-item p {
+    color: var(--color-gray-200);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+</style>

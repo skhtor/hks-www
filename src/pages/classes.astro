@@ -1,0 +1,147 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Classes" description="HKS Dance classes in Melbourne – Traditional Armenian dance, Body Conditioning, Mini Armenians, and Azad Gharibian Choreography.">
+  <section class="classes-hero section">
+    <div class="container">
+      <h1>Classes</h1>
+      <p class="classes-intro">Something for everyone – from our tiniest dancers to adults looking to stay fit, move with purpose, and connect with culture.</p>
+    </div>
+  </section>
+
+  <section class="class-list section">
+    <div class="container">
+      <div class="class-item">
+        <h2>Traditional Armenian Dance</h2>
+        <p class="class-description">Learn the authentic folk dances of Armenia – regional dances from across the country, passed down through generations. These classes focus on the traditional steps, formations, and music that have been part of Armenian culture for centuries.</p>
+        <div class="class-meta">
+          <span class="class-meta-tag">All ages</span>
+          <span class="class-meta-tag">All levels</span>
+          <span class="class-meta-tag">HKS</span>
+        </div>
+      </div>
+
+      <div class="class-item">
+        <h2>Azad Gharibian Choreography</h2>
+        <p class="class-description">The heart of AGD's 32-year legacy. Learn and perform the choreography of the legendary Azad Gharibian – dances that blend traditional Armenian folk with his unique artistic vision. Junior, Intermediate, Senior, and Social groups available.</p>
+        <div class="class-meta">
+          <span class="class-meta-tag">Ages 4+</span>
+          <span class="class-meta-tag">All levels</span>
+          <span class="class-meta-tag">via AGD</span>
+        </div>
+      </div>
+
+      <div class="class-item">
+        <h2>Body Conditioning</h2>
+        <p class="class-description">A dance-inspired fitness class designed to build strength, flexibility, and endurance. Perfect for dancers looking to complement their training, or anyone wanting a structured movement practice.</p>
+        <div class="class-meta">
+          <span class="class-meta-tag">Adults</span>
+          <span class="class-meta-tag">All fitness levels</span>
+          <span class="class-meta-tag new">New</span>
+        </div>
+      </div>
+
+      <div class="class-item">
+        <h2>Mini Armenians</h2>
+        <p class="class-description">An introduction to movement, rhythm, and Armenian culture for our youngest members (under 4). Through play, music, and gentle structured activities, little ones begin their journey into dance.</p>
+        <div class="class-meta">
+          <span class="class-meta-tag">Under 4s</span>
+          <span class="class-meta-tag">Parent & child</span>
+          <span class="class-meta-tag new">New</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="enrol section">
+    <div class="container enrol-inner">
+      <h2>Ready to start?</h2>
+      <p>Get in touch to learn more about class times, pricing, and availability.</p>
+      <a href="/contact" class="btn btn-primary">Contact Us</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .classes-hero {
+    text-align: center;
+  }
+
+  .classes-hero h1 {
+    margin-bottom: var(--space-lg);
+  }
+
+  .classes-intro {
+    font-size: 1.15rem;
+    color: var(--color-gray-200);
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .class-list {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .class-item {
+    padding: var(--space-xl);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin-bottom: var(--space-lg);
+  }
+
+  .class-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .class-item h2 {
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .class-description {
+    color: var(--color-gray-200);
+    line-height: 1.7;
+    margin-bottom: var(--space-md);
+  }
+
+  .class-meta {
+    display: flex;
+    gap: var(--space-xs);
+    flex-wrap: wrap;
+  }
+
+  .class-meta-tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-gray-200);
+  }
+
+  .class-meta-tag.new {
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .enrol {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .enrol-inner h2 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .enrol-inner p {
+    color: var(--color-gray-200);
+    font-size: 1.1rem;
+    margin-bottom: var(--space-lg);
+  }
+</style>

@@ -2,12 +2,73 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Home" isHome>
+<BaseLayout title="Home" description="HKS Dance - Armenian dance studio in Melbourne. Classes for all ages including traditional dance, body conditioning, and more." isHome>
   <section class="hero">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <h1>A new chapter in Armenian dance</h1>
+      <p class="hero-subtitle">Founded by Hermine Kuyumcian after 32 years of teaching Armenian dance in Australia, HKS Dance is her own studio – a space dedicated to movement, tradition, and community.</p>
+      <div class="hero-ctas">
+        <a href="/classes" class="btn btn-primary">View Classes</a>
+        <a href="/about" class="btn btn-secondary">Our Story</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="intro section">
     <div class="container">
-      <h1>HKS Dance</h1>
-      <p class="hero-subtitle">Armenian folk dance in Melbourne</p>
-      <a href="/about" class="btn btn-primary">Learn More</a>
+      <h2 class="section-heading">More than a studio</h2>
+      <p class="intro-text">After three decades of volunteering and growing Azad Gharibian Dance into Victoria's leading Armenian dance group, Hermine has opened her own doors. HKS Dance is the home she's built – for her community, her students, and the next generation.</p>
+    </div>
+  </section>
+
+  <section class="classes section">
+    <div class="container">
+      <h2 class="section-heading">What we offer</h2>
+      <p class="section-intro">From traditional Armenian folk dance to body conditioning, there's something for everyone.</p>
+
+      <div class="classes-grid">
+        <div class="class-card">
+          <div class="class-icon">💃</div>
+          <h3>Traditional Armenian Dance</h3>
+          <p>Learn the authentic folk dances of Armenia – passed down through generations and taught with care and passion.</p>
+        </div>
+        <div class="class-card">
+          <div class="class-icon">🎭</div>
+          <h3>Azad Gharibian Choreography</h3>
+          <p>AGD continues to rehearse at the HKS studio, performing the choreography of the legendary Azad Gharibian.</p>
+          <span class="class-tag">via AGD</span>
+        </div>
+        <div class="class-card">
+          <div class="class-icon">💪</div>
+          <h3>Body Conditioning</h3>
+          <p>Strengthen, stretch, and move. A dance-inspired conditioning class to keep your body ready for anything.</p>
+          <span class="class-tag">New</span>
+        </div>
+        <div class="class-card">
+          <div class="class-icon">👶</div>
+          <h3>Mini Armenians</h3>
+          <p>For our littlest dancers (under 4s). An introduction to movement, music, and Armenian culture through play.</p>
+          <span class="class-tag">New</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="legacy section">
+    <div class="container">
+      <blockquote class="legacy-quote">
+        "After 32 years of teaching Armenian dance in Australia, I'm proud to finally have a space to call my own – one that allows me to continue the legacy I've dedicated my life to, while growing into new areas I've always dreamed of."
+      </blockquote>
+      <p class="legacy-attribution">– Hermine Kuyumcian, Founder</p>
+    </div>
+  </section>
+
+  <section class="cta section">
+    <div class="container cta-inner">
+      <h2>Ready to join?</h2>
+      <p>Whether you're 3 or 73, there's a place for you at HKS Dance.</p>
+      <a href="/contact" class="btn btn-primary">Get in Touch</a>
     </div>
   </section>
 </BaseLayout>
@@ -19,16 +80,148 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     align-items: center;
     justify-content: center;
     text-align: center;
+    position: relative;
     background: var(--color-black);
   }
 
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.15), rgba(10, 10, 10, 0.95));
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
   .hero h1 {
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-md);
   }
 
   .hero-subtitle {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     color: var(--color-gray-200);
+    max-width: 650px;
+    margin: 0 auto var(--space-xl);
+    line-height: 1.7;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .intro {
+    text-align: center;
+  }
+
+  .section-heading {
+    text-align: center;
+    margin-bottom: var(--space-sm);
+  }
+
+  .section-intro {
+    text-align: center;
+    color: var(--color-gray-200);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto var(--space-xl);
+  }
+
+  .intro-text {
+    font-size: 1.15rem;
+    color: var(--color-gray-200);
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  .classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .class-card {
+    padding: var(--space-lg);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    text-align: center;
+    position: relative;
+  }
+
+  .class-icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .class-card h3 {
+    margin-bottom: var(--space-xs);
+  }
+
+  .class-card p {
+    color: var(--color-gray-200);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .class-tag {
+    display: inline-block;
+    margin-top: var(--space-sm);
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--color-accent);
+  }
+
+  .legacy {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .legacy-quote {
+    max-width: 750px;
+    margin: 0 auto var(--space-md);
+    font-style: italic;
+    color: var(--color-gray-200);
+    font-size: 1.15rem;
+    line-height: 1.8;
+    border-left: 4px solid var(--color-accent);
+    padding-left: var(--space-lg);
+    text-align: left;
+  }
+
+  .legacy-attribution {
+    color: var(--color-gray-600);
+    font-weight: 600;
+    text-align: left;
+    max-width: 750px;
+    margin: 0 auto;
+    padding-left: var(--space-lg);
+  }
+
+  .cta {
+    text-align: center;
+  }
+
+  .cta-inner h2 {
+    margin-bottom: var(--space-sm);
+  }
+
+  .cta-inner p {
+    color: var(--color-gray-200);
+    font-size: 1.1rem;
     margin-bottom: var(--space-lg);
   }
 </style>

@@ -1,0 +1,161 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Contact" description="Get in touch with HKS Dance – enquire about classes, book us for an event, or visit the studio.">
+  <section class="contact-hero section">
+    <div class="container">
+      <h1>Get in Touch</h1>
+      <p class="contact-intro">Whether you're interested in joining a class, booking us for an event, or just want to say hello – we'd love to hear from you.</p>
+    </div>
+  </section>
+
+  <section class="contact-cards section">
+    <div class="container">
+      <div class="cards-grid">
+        <div class="card">
+          <h2>Join a Class</h2>
+          <p>Ready to move? We have classes for all ages and levels – from tiny tots to adults.</p>
+          <ul class="card-details">
+            <li>Traditional Armenian Dance</li>
+            <li>Azad Gharibian Choreography (AGD)</li>
+            <li>Body Conditioning</li>
+            <li>Mini Armenians (under 4s)</li>
+          </ul>
+          <a href="/classes" class="btn btn-primary">View Classes</a>
+        </div>
+
+        <div class="card">
+          <h2>Book Us</h2>
+          <p>Planning a community event, wedding, or cultural celebration? We bring the energy of Armenian dance to your occasion.</p>
+          <ul class="card-details">
+            <li>Weddings and engagements</li>
+            <li>Community festivals</li>
+            <li>Corporate events</li>
+            <li>Cultural celebrations</li>
+          </ul>
+          <a href="mailto:info@hksdance.com.au" class="btn btn-primary">Get in Touch</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="find-us section">
+    <div class="container">
+      <h2>Find Us</h2>
+      <div class="find-us-grid">
+        <div class="find-us-item">
+          <h3>Email</h3>
+          <a href="mailto:info@hksdance.com.au">info@hksdance.com.au</a>
+        </div>
+        <div class="find-us-item">
+          <h3>Studio</h3>
+          <p>Unit 62/170 Forster Road<br />Mount Waverley VIC 3149</p>
+        </div>
+        <div class="find-us-item">
+          <h3>Social</h3>
+          <div class="find-us-social">
+            <a href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+            <a href="#" target="_blank" rel="noopener noreferrer">Instagram</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact-hero {
+    text-align: center;
+    padding-bottom: 0;
+  }
+
+  .contact-intro {
+    font-size: 1.15rem;
+    color: var(--color-gray-200);
+    max-width: 650px;
+    margin: var(--space-md) auto 0;
+    line-height: 1.7;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-xl);
+  }
+
+  .card {
+    padding: var(--space-xl);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-top: 4px solid var(--color-primary);
+  }
+
+  .card h2 {
+    margin-bottom: var(--space-sm);
+    font-size: 1.5rem;
+  }
+
+  .card p {
+    color: var(--color-gray-200);
+    margin-bottom: var(--space-md);
+    line-height: 1.6;
+  }
+
+  .card-details {
+    list-style: none;
+    margin-bottom: var(--space-lg);
+  }
+
+  .card-details li {
+    padding: var(--space-xs) 0;
+    color: var(--color-gray-200);
+    padding-left: 1.5rem;
+    position: relative;
+  }
+
+  .card-details li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  .find-us {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: var(--space-xl);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .find-us h2 {
+    margin-bottom: var(--space-lg);
+  }
+
+  .find-us-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-xl);
+  }
+
+  .find-us-item h3 {
+    font-size: 1rem;
+    margin-bottom: var(--space-xs);
+    color: var(--color-white);
+  }
+
+  .find-us-item a,
+  .find-us-item p {
+    color: var(--color-gray-200);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .find-us-social {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+</style>
