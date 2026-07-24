@@ -10,6 +10,73 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </div>
   </section>
 
+  <section class="timetable section">
+    <div class="container">
+      <h2>Timetable</h2>
+      <div class="calendar">
+        <div class="calendar-day">
+          <div class="calendar-day-header">Mon</div>
+          <div class="calendar-event">
+            <span class="calendar-time">7 – 8pm</span>
+            <span class="calendar-class">Body Conditioning</span>
+          </div>
+        </div>
+        <div class="calendar-day">
+          <div class="calendar-day-header">Tue</div>
+          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-time">5:45 – 6:30pm</span>
+            <span class="calendar-class">AGD Juniors</span>
+          </div>
+          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-time">6:45 – 7:45pm</span>
+            <span class="calendar-class">AGD Intermediates</span>
+          </div>
+          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-time">8:00 – 9:00pm</span>
+            <span class="calendar-class">AGD Naz Girls</span>
+          </div>
+          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-time">8:30 – 9:30pm</span>
+            <span class="calendar-class">AGD Senior Boys</span>
+          </div>
+        </div>
+        <div class="calendar-day">
+          <div class="calendar-day-header">Wed</div>
+          <div class="calendar-event">
+            <span class="calendar-time">10 – 11am</span>
+            <span class="calendar-class">Tiny Tots Dance & Movement</span>
+          </div>
+        </div>
+        <div class="calendar-day">
+          <div class="calendar-day-header">Thu</div>
+          <div class="calendar-event">
+            <span class="calendar-time">7 – 8pm</span>
+            <span class="calendar-class">ԱՐԻ ՊԱՐԻ - Come & Dance!</span>
+          </div>
+          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-time">8:30 – 9:30pm</span>
+            <span class="calendar-class">AGD Sirun Girls</span>
+          </div>
+        </div>
+        <div class="calendar-day">
+          <div class="calendar-day-header">Fri</div>
+          <div class="calendar-event">
+            <span class="calendar-time">7 – 8pm</span>
+            <span class="calendar-class">Body Conditioning</span>
+          </div>
+        </div>
+        <div class="calendar-day calendar-day-weekend">
+          <div class="calendar-day-header">Sat</div>
+          <div class="calendar-empty"></div>
+        </div>
+        <div class="calendar-day calendar-day-weekend">
+          <div class="calendar-day-header">Sun</div>
+          <div class="calendar-empty"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="class-list section">
     <div class="container">
       <div class="class-item">
@@ -26,9 +93,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </div>
 
       <div class="class-item">
+        <h2>Azad Gharibian Dance (AGD)</h2>
+        <p class="class-subtitle">Victoria's First Armenian Dance Group – Est. 1994</p>
+        <p class="class-description">Azad Gharibian Dance (AGD) is Victoria's first and only Armenian dance group, proudly preserving and celebrating Armenian dance and culture since 1994. As a not-for-profit organisation, AGD welcomes dancers of all ages and abilities in a fun, inclusive and supportive community.</p>
+        <p class="class-description">From festivals and concerts to weddings and community events across Australia, AGD proudly shares the energy, tradition and spirit of Armenian culture through dance. Join us and experience the joy of Armenian dance!</p>
+        <div class="benefits">
+          <h3>Groups</h3>
+          <ul class="benefits-list">
+            <li>Juniors</li>
+            <li>Intermediates</li>
+            <li>Seniors (Beginners)</li>
+            <li>Seniors (Advanced)</li>
+          </ul>
+        </div>
+        <div class="class-meta">
+          <span class="class-meta-tag">All ages</span>
+          <span class="class-meta-tag">All abilities</span>
+          <span class="class-meta-tag">Not-for-profit</span>
+        </div>
+        <a href="https://agd.org.au/" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="margin-top: var(--space-md);">Visit AGD Website →</a>
+      </div>
+
+      <div class="class-item">
         <h2>Body Conditioning</h2>
         <p class="class-subtitle">Enhancing Strength, Mobility & Control</p>
-        <p class="class-description">Body Conditioning is a dynamic, full-body workout combining cardiovascular exercise with bodyweight strength training. Because every movement can be easily modified, this class is perfect for all fitness levels.</p>
+        <p class="class-description">Body Conditioning is a structured, full-body class focused on strengthening and lengthening your muscles through controlled movement. Combining bodyweight strength exercises with deep stretching and mobility work, this class builds a strong, flexible foundation for everyday life.</p>
         <p class="class-description">Whether you are looking to improve for your favourite sport, build foundational strength, or simply move easier in daily life, you will find a safe, welcoming, and motivating environment. Join us to build confidence, reach your fitness goals, and leave every session feeling completely energised!</p>
         <div class="benefits">
           <h3>The Benefits</h3>
@@ -43,12 +132,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <div class="class-meta">
           <span class="class-meta-tag">All fitness levels</span>
           <span class="class-meta-tag">Full body workout</span>
+          <span class="class-meta-tag new">New</span>
         </div>
       </div>
 
       <div class="class-item">
         <h2>Armenian Zumba</h2>
-        <p class="class-description">Get ready to sweat and smile in our high-energy Armenian Zumba class! Move to the vibrant beats of modern and traditional Armenian music in a fun, dance-fitness workout.</p>
+        <p class="class-description">All the energy of a traditional Zumba class, powered by Armenian music. Follow along with easy, fun choreography while getting a full cardio workout to the vibrant beats of both modern and classic Armenian songs.</p>
         <p class="class-description">No previous dance experience is needed! This fast-paced class is designed for all fitness levels, blending easy choreography with an unforgettable workout.</p>
         <p class="class-description">Whether you want to burn calories, boost your mood, or just dance to your favourite Armenian tunes, you'll leave feeling completely energised!</p>
         <div class="class-meta">
@@ -111,6 +201,112 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .class-list {
     max-width: 800px;
     margin: 0 auto;
+  }
+
+  .timetable {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-bottom: 0;
+  }
+
+  .timetable h2 {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+  }
+
+  .calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .calendar-day {
+    background: rgba(255, 255, 255, 0.03);
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .calendar-day-weekend {
+    opacity: 0.4;
+  }
+
+  .calendar-day-header {
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .calendar-event {
+    padding: 0.5rem;
+    margin: 0.4rem;
+    background: rgba(139, 0, 0, 0.3);
+    border-left: 3px solid var(--color-primary);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .calendar-event-agd {
+    background: rgba(212, 175, 55, 0.1);
+    border-left-color: var(--color-accent);
+  }
+
+  .calendar-time {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .calendar-class {
+    font-size: 0.75rem;
+    color: var(--color-white);
+    line-height: 1.3;
+  }
+
+  .calendar-empty {
+    flex: 1;
+  }
+
+  @media (max-width: 768px) {
+    .calendar {
+      grid-template-columns: 1fr;
+    }
+
+    .calendar-day {
+      min-height: auto;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .calendar-day-header {
+      min-width: 50px;
+      border-bottom: none;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .calendar-day-weekend {
+      display: none;
+    }
+
+    .calendar-event {
+      flex: 1;
+    }
+
+    .calendar-empty {
+      padding: 0.75rem;
+    }
   }
 
   .class-item {
