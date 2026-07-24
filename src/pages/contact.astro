@@ -2,61 +2,86 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="Contact" description="Get in touch with HKS Dance – enquire about classes, book us for an event, or visit the studio.">
+<BaseLayout title="Contact" description="Get in touch with HKS Dance – enquire about classes or visit the studio.">
   <section class="contact-hero section">
     <div class="container">
       <h1>Get in Touch</h1>
-      <p class="contact-intro">Whether you're interested in joining a class, booking us for an event, or just want to say hello – we'd love to hear from you.</p>
+      <p class="contact-intro">Whether you're interested in joining a class or just want to say hello – we'd love to hear from you.</p>
     </div>
   </section>
 
-  <section class="contact-cards section">
+  <section class="contact-content section">
     <div class="container">
-      <div class="cards-grid">
-        <div class="card">
-          <h2>Join a Class</h2>
-          <p>Ready to move? We have classes for all ages and levels – from tiny tots to adults.</p>
-          <ul class="card-details">
-            <li>Traditional Armenian Dance</li>
-            <li>Azad Gharibian Choreography (AGD)</li>
-            <li>Body Conditioning</li>
-            <li>Mini Armenians (under 4s)</li>
-          </ul>
-          <a href="/classes" class="btn btn-primary">View Classes</a>
+      <div class="contact-grid">
+        <div class="contact-form-wrapper">
+          <h2>Send an Enquiry</h2>
+          <form class="contact-form" action="https://formspree.io/f/info@hksdance.com.au" method="POST">
+            <div class="form-group">
+              <label for="name">Name</label>
+              <input type="text" id="name" name="name" required autocomplete="name" />
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" name="phone" autocomplete="tel" />
+            </div>
+            <fieldset class="form-group form-group-checkboxes">
+              <legend>Classes Interested In</legend>
+              <div class="checkbox-grid">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="classes" value="Ari Pari - Come & Dance" />
+                  <span>ԱՐԻ ՊԱՐԻ - Come & Dance!</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="classes" value="Body Conditioning" />
+                  <span>Body Conditioning</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="classes" value="Armenian Zumba" />
+                  <span>Armenian Zumba</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="classes" value="Tiny Tots Dance & Movement" />
+                  <span>Tiny Tots Dance & Movement</span>
+                </label>
+              </div>
+            </fieldset>
+            <div class="form-group">
+              <label for="message">Message</label>
+              <textarea id="message" name="message" rows="5" required placeholder="Tell us a bit about yourself or your enquiry..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Enquiry</button>
+            <p class="form-note">We aim to respond within 48 hours.</p>
+          </form>
         </div>
 
-        <div class="card">
-          <h2>Book Us</h2>
-          <p>Planning a community event, wedding, or cultural celebration? We bring the energy of Armenian dance to your occasion.</p>
-          <ul class="card-details">
-            <li>Weddings and engagements</li>
-            <li>Community festivals</li>
-            <li>Corporate events</li>
-            <li>Cultural celebrations</li>
-          </ul>
-          <a href="mailto:info@hksdance.com.au" class="btn btn-primary">Get in Touch</a>
-        </div>
-      </div>
-    </div>
-  </section>
+        <div class="contact-info">
+          <div class="info-card">
+            <h3>Email</h3>
+            <a href="mailto:info@hksdance.com.au" class="info-link">info@hksdance.com.au</a>
+          </div>
 
-  <section class="find-us section">
-    <div class="container">
-      <h2>Find Us</h2>
-      <div class="find-us-grid">
-        <div class="find-us-item">
-          <h3>Email</h3>
-          <a href="mailto:info@hksdance.com.au">info@hksdance.com.au</a>
-        </div>
-        <div class="find-us-item">
-          <h3>Studio</h3>
-          <p>Unit 62/170 Forster Road<br />Mount Waverley VIC 3149</p>
-        </div>
-        <div class="find-us-item">
-          <h3>Social</h3>
-          <div class="find-us-social">
-            <a href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
-            <a href="#" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <div class="info-card">
+            <h3>Studio</h3>
+            <p>Unit 62/170 Forster Road</p>
+            <p>Mount Waverley VIC 3149</p>
+          </div>
+
+          <div class="info-card">
+            <h3>Social</h3>
+            <div class="info-social">
+              <a href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+              <a href="#" target="_blank" rel="noopener noreferrer">Instagram</a>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h3>Classes</h3>
+            <p>Traditional Armenian Dance, AGD Choreography, Body Conditioning &amp; Mini Armenians.</p>
+            <a href="/classes" class="info-link info-link-small">View Timetable →</a>
           </div>
         </div>
       </div>
@@ -78,84 +103,166 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     line-height: 1.7;
   }
 
-  .cards-grid {
+  .contact-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: 3fr 2fr;
     gap: var(--space-xl);
   }
 
-  .card {
-    padding: var(--space-xl);
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border-top: 4px solid var(--color-primary);
-  }
-
-  .card h2 {
-    margin-bottom: var(--space-sm);
-    font-size: 1.5rem;
-  }
-
-  .card p {
-    color: var(--color-gray-200);
-    margin-bottom: var(--space-md);
-    line-height: 1.6;
-  }
-
-  .card-details {
-    list-style: none;
+  .contact-form-wrapper h2 {
     margin-bottom: var(--space-lg);
   }
 
-  .card-details li {
-    padding: var(--space-xs) 0;
+  .contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--color-gray-200);
-    padding-left: 1.5rem;
-    position: relative;
   }
 
-  .card-details li::before {
-    content: '✓';
-    position: absolute;
-    left: 0;
-    color: var(--color-accent);
-    font-weight: 700;
+  .form-group input,
+  .form-group textarea {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
   }
 
-  .find-us {
-    text-align: center;
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+
+  .form-group-checkboxes {
+    border: none;
+    padding: 0;
+  }
+
+  .form-group-checkboxes legend {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-gray-200);
+    margin-bottom: 0.6rem;
+  }
+
+  .checkbox-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .checkbox-label:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .checkbox-label:has(input:checked) {
+    border-color: var(--color-accent);
+    background: rgba(212, 175, 55, 0.08);
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  .checkbox-label span {
+    font-size: 0.95rem;
+    color: var(--color-gray-200);
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+  }
+
+  .form-note {
+    font-size: 0.85rem;
+    color: var(--color-gray-400);
+    margin-top: 0.25rem;
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .info-card {
+    padding: var(--space-md);
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    padding: var(--space-xl);
     border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  .find-us h2 {
-    margin-bottom: var(--space-lg);
-  }
-
-  .find-us-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-xl);
-  }
-
-  .find-us-item h3 {
-    font-size: 1rem;
+  .info-card h3 {
+    font-size: 0.9rem;
     margin-bottom: var(--space-xs);
+    color: var(--color-accent);
+  }
+
+  .info-link {
+    font-size: 1.1rem;
+    font-weight: 600;
     color: var(--color-white);
   }
 
-  .find-us-item a,
-  .find-us-item p {
+  .info-link-small {
+    font-size: 0.9rem;
+    margin-top: var(--space-sm);
+    display: inline-block;
+  }
+
+  .info-card p {
     color: var(--color-gray-200);
     font-size: 0.95rem;
     line-height: 1.6;
   }
 
-  .find-us-social {
+  .info-social {
     display: flex;
     flex-direction: column;
     gap: var(--space-xs);
+  }
+
+  .info-social a {
+    color: var(--color-gray-200);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 768px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
