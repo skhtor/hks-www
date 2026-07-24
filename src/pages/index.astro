@@ -25,31 +25,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <section class="classes section">
     <div class="container">
       <h2 class="section-heading">What we offer</h2>
-      <p class="section-intro">From traditional Armenian folk dance to body conditioning, there's something for everyone.</p>
-
-      <div class="classes-grid">
-        <div class="class-card">
-          <div class="class-icon">💃</div>
-          <h3>ԱՐԻ ՊԱՐԻ - Come & Dance!</h3>
-          <p>Discover Armenia's regional folk dances – ethnographic dances thousands of years old, taught in a fun, supportive environment.</p>
-        </div>
-        <div class="class-card">
-          <div class="class-icon">💪</div>
-          <h3>Body Conditioning</h3>
-          <p>A dynamic full-body workout combining cardio and bodyweight strength training. Perfect for all fitness levels.</p>
-        </div>
-        <div class="class-card">
-          <div class="class-icon">🎶</div>
-          <h3>Armenian Zumba</h3>
-          <p>High-energy dance fitness to the vibrant beats of modern and traditional Armenian music. No experience needed!</p>
-          <span class="class-tag">New</span>
-        </div>
-        <div class="class-card">
-          <div class="class-icon">👶</div>
-          <h3>Tiny Tots Dance & Movement</h3>
-          <p>For our littlest movers (18 months – 4 years). A fun introduction to dance alongside a parent or caregiver.</p>
-          <span class="class-tag">New</span>
-        </div>
+      <p class="section-intro">Traditional Armenian dance, fitness, Zumba, and classes for little ones – all under one roof.</p>
+      <div class="classes-cta">
+        <a href="/classes" class="btn btn-primary">View Classes & Timetable →</a>
       </div>
     </div>
   </section>
@@ -65,8 +43,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   <section class="cta section">
     <div class="container cta-inner">
-      <h2>Ready to join?</h2>
-      <p>Whether you're 3 or 73, there's a place for you at HKS Dance.</p>
+      <h2>Join the HKS family</h2>
+      <p>All ages. All levels. One community.</p>
       <a href="/contact" class="btn btn-primary">Get in Touch</a>
     </div>
   </section>
@@ -139,47 +117,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     text-align: center;
   }
 
-  .classes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--space-lg);
-  }
-
-  .class-card {
-    padding: var(--space-lg);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+  .classes-cta {
     text-align: center;
-    position: relative;
-  }
-
-  .class-icon {
-    font-size: 2.5rem;
-    margin-bottom: var(--space-sm);
-  }
-
-  .class-card h3 {
-    margin-bottom: var(--space-xs);
-  }
-
-  .class-card p {
-    color: var(--color-gray-200);
-    font-size: 0.95rem;
-    line-height: 1.6;
-  }
-
-  .class-tag {
-    display: inline-block;
-    margin-top: var(--space-sm);
-    padding: 0.25rem 0.75rem;
-    border-radius: 100px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    background: rgba(212, 175, 55, 0.2);
-    color: var(--color-accent);
   }
 
   .legacy {
