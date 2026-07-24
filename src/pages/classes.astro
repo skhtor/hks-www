@@ -16,9 +16,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="calendar">
         <div class="calendar-day">
           <div class="calendar-day-header">Mon</div>
-          <div class="calendar-event">
+          <div class="calendar-event calendar-event-proposed">
             <span class="calendar-time">7 – 8pm</span>
             <span class="calendar-class">Body Conditioning</span>
+            <span class="calendar-proposed-tag">Proposed</span>
           </div>
         </div>
         <div class="calendar-day">
@@ -42,9 +43,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Wed</div>
-          <div class="calendar-event">
+          <div class="calendar-event calendar-event-proposed">
             <span class="calendar-time">10 – 11am</span>
             <span class="calendar-class">Tiny Tots Dance & Movement</span>
+            <span class="calendar-proposed-tag">Proposed</span>
           </div>
         </div>
         <div class="calendar-day">
@@ -60,9 +62,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Fri</div>
-          <div class="calendar-event">
+          <div class="calendar-event calendar-event-proposed">
             <span class="calendar-time">10 – 11am</span>
+            <span class="calendar-class">Armenian Zumba</span>
+            <span class="calendar-proposed-tag">Proposed</span>
+          </div>
+          <div class="calendar-event calendar-event-proposed">
+            <span class="calendar-time">11:15am – 12:15pm</span>
             <span class="calendar-class">Body Conditioning</span>
+            <span class="calendar-proposed-tag">Proposed</span>
           </div>
         </div>
         <div class="calendar-day calendar-day-weekend">
@@ -261,6 +269,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .calendar-event-agd {
     background: rgba(212, 175, 55, 0.1);
     border-left-color: var(--color-accent);
+  }
+
+  .calendar-event-proposed {
+    border-left-style: dashed;
+    opacity: 0.75;
+  }
+
+  .calendar-proposed-tag {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-gray-200);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    width: fit-content;
   }
 
   .calendar-time {
