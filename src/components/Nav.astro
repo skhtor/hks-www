@@ -11,8 +11,8 @@ const links = [
 
 <nav class="nav" aria-label="Main navigation">
   <div class="nav-inner container">
-    <a href="/" class="nav-logo" aria-label="HKS Dance - Home">
-      <span class="nav-title">HKS Dance</span>
+    <a href="/" class="nav-logo" aria-label="HKS Dance Network - Home">
+      <img src="/hks-logo.png" alt="HKS Dance Network" class="nav-logo-img" />
     </a>
 
     <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Toggle navigation menu">
@@ -74,10 +74,10 @@ const links = [
     gap: var(--space-sm);
   }
 
-  .nav-title {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: var(--color-white);
+  .nav-logo-img {
+    height: 1.75rem;
+    width: auto;
+    filter: invert(1);
   }
 
   .nav-links {
