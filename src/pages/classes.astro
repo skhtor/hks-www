@@ -16,10 +16,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="calendar">
         <div class="calendar-day">
           <div class="calendar-day-header">Mon</div>
-          <div class="calendar-event calendar-event-proposed">
-            <span class="calendar-time">7 – 8pm</span>
-            <span class="calendar-class">Body Conditioning</span>
-            <span class="calendar-proposed-tag">Proposed</span>
+          <div class="calendar-event">
+            <span class="calendar-time">6:30 – 7:30pm</span>
+            <span class="calendar-class">ԱՐԻ ՊԱՐԻ - Armenian Traditional Dance (Beginners)</span>
+          </div>
+          <div class="calendar-event">
+            <span class="calendar-time">7:45 – 8:45pm</span>
+            <span class="calendar-class">Armenian Zumba</span>
           </div>
         </div>
         <div class="calendar-day">
@@ -43,17 +46,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Wed</div>
-          <div class="calendar-event calendar-event-proposed">
+          <div class="calendar-event">
             <span class="calendar-time">10 – 11am</span>
             <span class="calendar-class">Tiny Tots Dance & Movement</span>
-            <span class="calendar-proposed-tag">Proposed</span>
           </div>
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Thu</div>
           <div class="calendar-event">
             <span class="calendar-time">7 – 8pm</span>
-            <span class="calendar-class">ԱՐԻ ՊԱՐԻ - Come & Dance!</span>
+            <span class="calendar-class">ԱՐԻ ՊԱՐԻ - Armenian Traditional Dance (Advanced)</span>
           </div>
           <div class="calendar-event calendar-event-agd">
             <span class="calendar-time">8:30 – 9:30pm</span>
@@ -88,7 +90,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <section class="class-list section">
     <div class="container">
       <div class="class-item">
-        <h2>ԱՐԻ ՊԱՐԻ - Come & Dance!</h2>
+        <h2>ԱՐԻ ՊԱՐԻ - Armenian Traditional Dance</h2>
         <p class="class-subtitle">Discover Armenia's Regional Folk Dances</p>
         <p class="class-description">Discover the ancient roots of Armenian dance at HKS! Experience our incredibly rich cultural footprint through movement. Learn dances to melodies that are thousands of years old.</p>
         <p class="class-description">We welcome all ages and experience levels in a fun, supportive environment. No prior dance experience is required to join us.</p>
@@ -307,18 +309,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   @media (max-width: 768px) {
     .calendar {
       grid-template-columns: 1fr;
+      gap: 0;
     }
 
     .calendar-day {
       min-height: auto;
-      flex-direction: row;
-      align-items: center;
+      flex-direction: column;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .calendar-day-header {
-      min-width: 50px;
+      text-align: left;
+      padding: 0.75rem 1rem;
       border-bottom: none;
-      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 0.9rem;
     }
 
     .calendar-day-weekend {
@@ -326,7 +330,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
 
     .calendar-event {
-      flex: 1;
+      margin: 0 0.75rem 0.5rem;
     }
 
     .calendar-empty {
