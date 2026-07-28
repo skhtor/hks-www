@@ -178,35 +178,31 @@ const links = [
     }
 
     var isHome = window.location.pathname === '/';
-    if (isMobile) {
-      nav.classList.remove('scrolled');
-      menu.classList.remove('open');
-      toggle && toggle.setAttribute('aria-expanded', 'false');
-    } else if (!isHome) {
-      nav.classList.add('scrolled');
-    } else if (window.scrollY <= 100) {
-      nav.classList.remove('scrolled');
+    if (!isMobile) {
+      if (!isHome) {
+        nav.classList.add('scrolled');
+      } else if (window.scrollY <= 100) {
+        nav.classList.remove('scrolled');
+      }
     }
 
-    if (!isMobile) {
-      var lastScroll = 0;
-      window.addEventListener('scroll', function() {
-        var currentScroll = window.scrollY;
-        if (isHome) {
-          if (currentScroll > 100) {
-            nav.classList.add('scrolled');
-          } else {
-            nav.classList.remove('scrolled');
-          }
-        }
-        if (currentScroll > lastScroll && currentScroll > 80) {
-          nav.classList.add('hidden');
+    var lastScroll = 0;
+    window.addEventListener('scroll', function() {
+      var currentScroll = window.scrollY;
+      if (isHome) {
+        if (currentScroll > 100) {
+          nav.classList.add('scrolled');
         } else {
-          nav.classList.remove('hidden');
+          nav.classList.remove('scrolled');
         }
-        lastScroll = currentScroll;
-      });
-    }
+      }
+      if (currentScroll > lastScroll && currentScroll > 80) {
+        nav.classList.add('hidden');
+      } else {
+        nav.classList.remove('hidden');
+      }
+      lastScroll = currentScroll;
+    });
   }
 
   initNav();
