@@ -180,8 +180,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <section class="enrol section">
     <div class="container enrol-inner">
       <h2>Ready to start?</h2>
-      <p>Get in touch to learn more about class times, pricing, and availability.</p>
-      <a href="/contact" class="btn btn-primary">Contact Us</a>
+      <p>Try any of our classes for free – no commitment required.</p>
+      <a href="https://my.classmanager.com/hks-dance-network/classes?mode=trial" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Book Your Free Trial</a>
+      <p class="enrol-secondary">Have questions? <a href="/contact">Send an enquiry</a></p>
     </div>
   </section>
 </BaseLayout>
@@ -442,5 +443,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     color: var(--color-gray-200);
     font-size: 1.1rem;
     margin-bottom: var(--space-lg);
+  }
+
+  .enrol-secondary {
+    margin-top: var(--space-md);
+    margin-bottom: 0;
+    font-size: 0.95rem;
+    color: var(--color-gray-400);
+  }
+
+  .enrol-secondary a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .enrol-secondary a:hover {
+    color: var(--color-white);
   }
 </style>

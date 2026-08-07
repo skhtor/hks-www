@@ -7,6 +7,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="container">
       <h1>Get in Touch</h1>
       <p class="contact-intro">Whether you're interested in joining a class or just want to say hello – we'd love to hear from you.</p>
+      <div class="contact-trial-cta">
+        <p>Ready to jump in? Register for a free trial class – no commitment required.</p>
+        <a href="https://my.classmanager.com/hks-dance-network/classes?mode=trial" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Book a Free Trial</a>
+      </div>
     </div>
   </section>
 
@@ -36,9 +40,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                   <span>ԱՐԻ ՊԱՐԻ - Armenian Traditional Dance</span>
                 </label>
                 <label class="checkbox-label">
-                  <input type="checkbox" name="entry.1237645391" value="Azad Gharibian Dance (AGD)" />
+                  <input type="checkbox" name="entry.1237645391" value="Azad Gharibian Dance (AGD)" id="agd-checkbox" />
                   <span>Azad Gharibian Dance (AGD)</span>
                 </label>
+                <div class="agd-notice" id="agd-notice">
+                  <p>🎉 AGD registrations are managed separately. Please visit the AGD website to register or enquire:</p>
+                  <a href="https://agd.org.au/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-small">Visit AGD Website →</a>
+                </div>
                 <label class="checkbox-label">
                   <input type="checkbox" name="entry.1237645391" value="Body Conditioning" />
                   <span>Body Conditioning</span>
@@ -105,6 +113,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     max-width: 650px;
     margin: var(--space-md) auto 0;
     line-height: 1.7;
+  }
+
+  .contact-trial-cta {
+    margin-top: var(--space-xl);
+    padding: var(--space-lg);
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 8px;
+    max-width: 550px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .contact-trial-cta p {
+    color: var(--color-gray-200);
+    font-size: 1rem;
+    margin-bottom: var(--space-md);
+    line-height: 1.6;
   }
 
   .contact-grid {
@@ -205,6 +231,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     color: var(--color-gray-200);
   }
 
+  .agd-notice {
+    display: none;
+    padding: var(--space-md);
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 6px;
+    margin-top: 0.25rem;
+  }
+
+  .agd-notice.visible {
+    display: block;
+  }
+
+  .agd-notice p {
+    color: var(--color-gray-200);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-sm);
+    line-height: 1.5;
+  }
+
+  .btn-small {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+
   .form-group textarea {
     resize: vertical;
     min-height: 120px;
@@ -270,3 +321,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
   }
 </style>
+
+<script>
+  const agdCheckbox = document.getElementById('agd-checkbox');
+  const agdNotice = document.getElementById('agd-notice');
+
+  if (agdCheckbox && agdNotice) {
+    agdCheckbox.addEventListener('change', () => {
+      agdNotice.classList.toggle('visible', agdCheckbox.checked);
+    });
+  }
+</script>

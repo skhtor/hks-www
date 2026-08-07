@@ -9,8 +9,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <h1>Our culture lives when we dance</h1>
       <p class="hero-subtitle">Learn dances that are thousands of years old, get fit to Armenian beats, or introduce your little ones to our culture – all in a welcoming Melbourne studio.</p>
       <div class="hero-ctas">
-        <a href="/classes" class="btn btn-primary">View Classes</a>
-        <a href="/about" class="btn btn-secondary">Our Story</a>
+        <a href="https://my.classmanager.com/hks-dance-network/classes?mode=trial" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Book a Free Trial</a>
+        <a href="/classes" class="btn btn-secondary">View Classes</a>
       </div>
     </div>
   </section>
@@ -45,7 +45,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="container cta-inner">
       <h2>Join the HKS family</h2>
       <p>All ages. All levels. One community.</p>
-      <a href="/contact" class="btn btn-primary">Get in Touch</a>
+      <a href="https://my.classmanager.com/hks-dance-network/classes?mode=trial" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Register for a Free Trial Class</a>
+      <p class="cta-secondary">Have questions? <a href="/contact">Send an enquiry</a></p>
     </div>
   </section>
 </BaseLayout>
@@ -161,5 +162,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     color: var(--color-gray-200);
     font-size: 1.1rem;
     margin-bottom: var(--space-lg);
+  }
+
+  .cta-secondary {
+    margin-top: var(--space-md);
+    margin-bottom: 0;
+    font-size: 0.95rem;
+    color: var(--color-gray-400);
+  }
+
+  .cta-secondary a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .cta-secondary a:hover {
+    color: var(--color-white);
   }
 </style>
