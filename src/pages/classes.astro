@@ -16,55 +16,65 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="calendar">
         <div class="calendar-day">
           <div class="calendar-day-header">Mon</div>
-          <div class="calendar-event">
+          <a href="https://my.classmanager.com/hks-dance-network/classes/ari-pari-armenian-traditional-dance-beginners?mode=trial" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-link">
             <span class="calendar-time">6:30 – 7:30pm</span>
             <span class="calendar-class">ԱՐԻ ՊԱՐԻ - Armenian Traditional Dance (Beginners)</span>
-          </div>
-          <div class="calendar-event">
+            <span class="calendar-action">Book trial →</span>
+          </a>
+          <a href="https://my.classmanager.com/hks-dance-network/classes/armenian-zumba?mode=trial" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-link">
             <span class="calendar-time">7:45 – 8:45pm</span>
             <span class="calendar-class">Armenian Zumba</span>
-          </div>
+            <span class="calendar-action">Book trial →</span>
+          </a>
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Tue</div>
-          <div class="calendar-event calendar-event-agd">
+          <a href="https://agd.org.au/" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-agd calendar-event-link">
             <span class="calendar-time">5:45 – 6:30pm</span>
             <span class="calendar-class">AGD Juniors</span>
-          </div>
-          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-action calendar-action-agd">AGD ↗</span>
+          </a>
+          <a href="https://agd.org.au/" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-agd calendar-event-link">
             <span class="calendar-time">6:45 – 7:45pm</span>
             <span class="calendar-class">AGD Intermediates</span>
-          </div>
-          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-action calendar-action-agd">AGD ↗</span>
+          </a>
+          <a href="https://agd.org.au/" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-agd calendar-event-link">
             <span class="calendar-time">8:00 – 9:00pm</span>
             <span class="calendar-class">AGD Naz Girls</span>
-          </div>
-          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-action calendar-action-agd">AGD ↗</span>
+          </a>
+          <a href="https://agd.org.au/" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-agd calendar-event-link">
             <span class="calendar-time">8:30 – 9:30pm</span>
             <span class="calendar-class">AGD Senior Boys</span>
-          </div>
+            <span class="calendar-action calendar-action-agd">AGD ↗</span>
+          </a>
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Wed</div>
-          <div class="calendar-event">
+          <a href="https://my.classmanager.com/hks-dance-network/classes/tiny-tots-dance-movement?mode=trial" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-link">
             <span class="calendar-time">10 – 11am</span>
             <span class="calendar-class">Tiny Tots Dance & Movement</span>
-          </div>
-          <div class="calendar-event">
+            <span class="calendar-action">Book trial →</span>
+          </a>
+          <a href="https://my.classmanager.com/hks-dance-network/classes/body-conditioning?mode=trial" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-link">
             <span class="calendar-time">7:45 – 8:45pm</span>
             <span class="calendar-class">Body Conditioning</span>
-          </div>
+            <span class="calendar-action">Book trial →</span>
+          </a>
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Thu</div>
-          <div class="calendar-event">
+          <a href="https://my.classmanager.com/hks-dance-network/classes/cls_01kvqeww182k5q77swjr7jfk15?mode=trial" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-link">
             <span class="calendar-time">7 – 8pm</span>
             <span class="calendar-class">ԱՐԻ ՊԱՐԻ - Armenian Traditional Dance (Advanced)</span>
-          </div>
-          <div class="calendar-event calendar-event-agd">
+            <span class="calendar-action">Book trial →</span>
+          </a>
+          <a href="https://agd.org.au/" target="_blank" rel="noopener noreferrer" class="calendar-event calendar-event-agd calendar-event-link">
             <span class="calendar-time">8:30 – 9:30pm</span>
             <span class="calendar-class">AGD Sirun Girls</span>
-          </div>
+            <span class="calendar-action calendar-action-agd">AGD ↗</span>
+          </a>
         </div>
         <div class="calendar-day">
           <div class="calendar-day-header">Fri</div>
@@ -264,6 +274,21 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     gap: 0.25rem;
   }
 
+  .calendar-event-link {
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .calendar-event-link:hover {
+    background: rgba(139, 0, 0, 0.5);
+    transform: translateY(-1px);
+  }
+
+  .calendar-event-agd.calendar-event-link:hover {
+    background: rgba(212, 175, 55, 0.2);
+  }
+
   .calendar-event-agd {
     background: rgba(212, 175, 55, 0.1);
     border-left-color: var(--color-accent);
@@ -296,6 +321,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 0.75rem;
     color: var(--color-white);
     line-height: 1.3;
+  }
+
+  .calendar-action {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-accent);
+    margin-top: 0.2rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  .calendar-event-link:hover .calendar-action {
+    opacity: 1;
+  }
+
+  .calendar-action-agd {
+    color: var(--color-gray-200);
   }
 
   .calendar-empty {
